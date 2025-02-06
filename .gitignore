@@ -1,0 +1,39 @@
+# Node.js dependencies
+node_modules/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Angular build artifacts
+dist/
+out-tsc/
+coverage/
+
+# IDE/editor config files
+.vscode/
+.idea/
+*.iml
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Logs & debugging
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment files
+src/environments/environment*.ts
+
+# Angular cache
+.angular/
+
+# Compiled TypeScript
+*.js
+*.js.map
+*.d.ts
+
+# Miscellaneous
+tmp/
+temp/
