@@ -7,7 +7,9 @@ services:
     ports:
       - '4200:4200'
     volumes:
-      - ./aquapp-front:/aquapp-front
+      - type: bind
+        source: ./aquapp-front
+        target: /aquapp-front
     environment:
       - STYLE=css
     env_file:
