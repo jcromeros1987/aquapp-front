@@ -10,9 +10,10 @@ import {
  * v11: Venta diaria — menú renombrado; garrafón inventariado / sin inventariar + cliente.
  * v12 (lógica): Al cargar se fusionan ítems por defecto con localStorage para que no
  * desaparezca “Venta diaria” si se borró en Gestionar menú o el guardado era incompleto.
- * Ítem m16 (Rutas de reparto): se añade al fusionar con localStorage si faltaba.
+ * v14: nueva clave de almacenamiento para reaplicar el menú completo (incl. Rutas bajo Catálogos)
+ * sin arrastrar parentId/route rotos desde versiones anteriores.
  */
-const STORAGE_KEY = 'aquapp_dashboard_menu_v11';
+const STORAGE_KEY = 'aquapp_dashboard_menu_v14';
 
 export const DEFAULT_DASHBOARD_MENU: MenuItemRecord[] = [
   {
@@ -172,13 +173,29 @@ export class DashboardMenuService {
   loadInitial(): MenuItemRecord[] {
     const defaults = this.cloneDefaults();
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
+      let raw = localStorage.getItem(STORAGE_KEY);
+      let migratedFromLegacy = false;
+      if (!raw) {
+        const legacy = localStorage.getItem('aquapp_dashboard_menu_v11');
+        if (legacy) {
+          raw = legacy;
+          migratedFromLegacy = true;
+        }
+      }
       if (!raw) return defaults;
       const parsed = JSON.parse(raw) as MenuItemRecord[];
       if (!Array.isArray(parsed) || parsed.length === 0) {
         return defaults;
       }
-      return this.mergeMenuWithDefaults(parsed, defaults);
+      const merged = this.mergeMenuWithDefaults(parsed, defaults);
+      if (migratedFromLegacy) {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+        } catch {
+          /* quota / privado */
+        }
+      }
+      return merged;
     } catch {
       return defaults;
     }
@@ -198,7 +215,21 @@ export class DashboardMenuService {
     const merged: MenuItemRecord[] = [];
     for (const d of defaults) {
       const s = savedById.get(d.id);
-      merged.push(s ? { ...d, ...s, id: d.id } : { ...d });
+      if (!s) {
+        merged.push({ ...d });
+        continue;
+      }
+      // No permitir que localStorage rompa estructura: padre y ruta vienen siempre del default.
+      merged.push({
+        ...d,
+        id: d.id,
+        parentId: d.parentId,
+        route: d.route,
+        label: s.label?.trim() ? s.label : d.label,
+        order: typeof s.order === 'number' ? s.order : d.order,
+        enabled: typeof s.enabled === 'boolean' ? s.enabled : d.enabled,
+        icon: s.icon?.trim() ? s.icon : d.icon,
+      });
     }
     for (const p of parsed) {
       if (!defaultById.has(p.id)) {
