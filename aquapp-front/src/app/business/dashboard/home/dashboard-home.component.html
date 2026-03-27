@@ -1,0 +1,119 @@
+<section class="home-card">
+  <h1>Inicio</h1>
+  <p class="home-quick-links">
+    <a routerLink="/dashboard/venta" class="home-cta">Venta diaria y entregas</a>
+    <span class="home-quick-sep">·</span>
+    <span class="home-quick-hint">registro de ventas y entrega rápida de garrafones</span>
+  </p>
+  <p class="lead">
+    Resumen de los últimos 14 días: <strong>ventas por día</strong> (ingresos) y
+    <strong>gastos estimados</strong> según costo unitario × cantidad vendida en cada venta. Las
+    líneas punteadas marcan el <strong>promedio diario</strong> en el periodo.
+  </p>
+</section>
+
+<p class="state state--load" *ngIf="loading">Cargando resumen…</p>
+<p class="state state--err" *ngIf="error">{{ error }}</p>
+
+<section class="chart-card" *ngIf="!loading && !error && summary">
+  <div class="chart-head">
+    <h2>Ventas y gastos diarios</h2>
+    <div class="stats" *ngIf="summary.range_days > 0">
+      <div class="stat">
+        <span class="stat-label">Media ventas / día</span>
+        <strong class="stat-val stat-val--sales">{{ summary.avg_daily_sales | number : '1.2-2' }}</strong>
+      </div>
+      <div class="stat">
+        <span class="stat-label">Media gastos / día</span>
+        <strong class="stat-val stat-val--exp">{{ summary.avg_daily_expenses | number : '1.2-2' }}</strong>
+      </div>
+    </div>
+  </div>
+
+  <p class="hint chart-hint" *ngIf="summary.range_days === 0">
+    Crea al menos una <strong>sucursal</strong> y registra ventas para ver la gráfica.
+  </p>
+
+  <div class="chart-legend" *ngIf="summary.range_days > 0 && summary.series.length">
+    <span class="lg lg-sales">■ Ventas</span>
+    <span class="lg lg-exp">■ Gastos (costo × ud.)</span>
+    <span class="lg lg-avg-s">— Media ventas</span>
+    <span class="lg lg-avg-e">— Media gastos</span>
+  </div>
+
+  <div class="svg-wrap" *ngIf="summary.range_days > 0 && summary.series.length">
+    <svg
+      class="chart-svg"
+      [attr.viewBox]="'0 0 ' + viewW + ' ' + viewH"
+      preserveAspectRatio="xMidYMid meet"
+    >
+      <!-- Grid -->
+      @for (t of yTicks; track t.y) {
+        <line
+          class="grid-line"
+          [attr.x1]="padL"
+          [attr.y1]="t.y"
+          [attr.x2]="padL + innerW"
+          [attr.y2]="t.y"
+        />
+        <text class="axis-y" [attr.x]="padL - 8" [attr.y]="t.y + 4">{{ t.val }}</text>
+      }
+
+      <line
+        class="axis-x"
+        [attr.x1]="padL"
+        [attr.y1]="baselineY"
+        [attr.x2]="padL + innerW"
+        [attr.y2]="baselineY"
+      />
+
+      <!-- Media ventas -->
+      <line
+        class="avg-line avg-line--sales"
+        [attr.x1]="padL"
+        [attr.x2]="padL + innerW"
+        [attr.y1]="avgSalesY"
+        [attr.y2]="avgSalesY"
+      />
+      <!-- Media gastos -->
+      <line
+        class="avg-line avg-line--exp"
+        [attr.x1]="padL"
+        [attr.x2]="padL + innerW"
+        [attr.y1]="avgExpY"
+        [attr.y2]="avgExpY"
+      />
+
+      @for (b of chartBars; track $index) {
+        <rect
+          class="bar bar--sales"
+          [attr.x]="b.salesX"
+          [attr.y]="b.salesY"
+          [attr.width]="b.barW"
+          [attr.height]="b.salesH"
+          rx="3"
+        />
+        <rect
+          class="bar bar--exp"
+          [attr.x]="b.expX"
+          [attr.y]="b.expY"
+          [attr.width]="b.barW"
+          [attr.height]="b.expH"
+          rx="3"
+        />
+        <text class="x-label" [attr.x]="b.labelX" [attr.y]="viewH - 12">
+          {{ b.label }}
+        </text>
+      }
+    </svg>
+  </div>
+</section>
+
+<section class="home-card home-card--footer">
+  <p class="hint">
+    <strong>Venta diaria</strong> en el menú lateral (🧾) o
+    <a routerLink="/dashboard/venta">abrir aquí</a>. En
+    <strong>Configuración → Gestionar menú</strong> puedes reordenar el menú; los ítems base
+    vuelven a fusionarse al recargar si faltaban.
+  </p>
+</section>

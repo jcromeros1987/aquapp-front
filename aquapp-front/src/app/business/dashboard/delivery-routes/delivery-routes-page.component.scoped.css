@@ -1,0 +1,38 @@
+.section-title {
+  margin: 1.25rem 0 0.65rem;
+  font-size: 1rem;
+  color: #374151;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.edit-grid {
+  margin: 0;
+}
+
+.routes-table {
+  margin-bottom: 0.75rem;
+}
+
+.route-add {
+  margin-bottom: 0.5rem;
+  align-items: flex-end;
+}
+
+.route-edit-row {
+  grid-template-columns: 1fr 6rem;
+}
+
+.toolbar.wrap {
+  align-items: flex-end;
+}
+
+.field.grow {
+  flex: 1 1 12rem;
+  min-width: 10rem;
+}

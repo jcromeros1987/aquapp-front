@@ -1,0 +1,130 @@
+<div class="admin-page">
+  <header class="admin-head">
+    <h1>Gestionar menú del panel</h1>
+    <p class="admin-desc">
+      Tabla de opciones del menú lateral. Usa <strong>Padre</strong> vacío para ítems raíz
+      o elige otro ítem para crear un submenú. Deja <strong>Ruta</strong> vacía si el ítem
+      solo agrupa hijos. La ruta es relativa a <code>/dashboard/</code>.
+    </p>
+    @if (savedHint) {
+      <p class="admin-hint" role="status">{{ savedHint }}</p>
+    }
+  </header>
+
+  <div class="admin-toolbar">
+    <button type="button" class="btn primary" (click)="addRow()">Agregar fila</button>
+    <button type="button" class="btn" (click)="save()">Guardar cambios</button>
+    <button type="button" class="btn danger" (click)="resetDefaults()">
+      Restaurar predeterminado
+    </button>
+  </div>
+
+  <div class="table-wrap">
+    <table class="menu-table">
+      <thead>
+        <tr>
+          <th>Orden *</th>
+          <th>Etiqueta</th>
+          <th>Ruta</th>
+          <th>Icono</th>
+          <th>Padre</th>
+          <th>Activo</th>
+          <th>Mover</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of rows; track row.id) {
+          <tr>
+            <td>
+              <input
+                type="number"
+                class="inp sm"
+                [(ngModel)]="row.order"
+                [name]="'order-' + row.id"
+              />
+            </td>
+            <td>
+              <input
+                type="text"
+                class="inp"
+                [(ngModel)]="row.label"
+                [name]="'label-' + row.id"
+              />
+            </td>
+            <td>
+              <input
+                type="text"
+                class="inp"
+                [(ngModel)]="row.route"
+                [name]="'route-' + row.id"
+                placeholder="ej. ventas/registrar"
+              />
+            </td>
+            <td>
+              <input
+                type="text"
+                class="inp sm"
+                [(ngModel)]="row.icon"
+                [name]="'icon-' + row.id"
+                placeholder="emoji"
+              />
+            </td>
+            <td>
+              <select
+                class="inp"
+                [(ngModel)]="row.parentId"
+                [name]="'parent-' + row.id"
+              >
+                <option [ngValue]="null">— Ninguno (raíz)</option>
+                @for (p of parentChoices(row); track p.id) {
+                  <option [ngValue]="p.id">{{ p.label }} ({{ p.id }})</option>
+                }
+              </select>
+            </td>
+            <td class="cell-center">
+              <input
+                type="checkbox"
+                [(ngModel)]="row.enabled"
+                [name]="'en-' + row.id"
+              />
+            </td>
+            <td class="cell-actions">
+              <button
+                type="button"
+                class="btn tiny"
+                (click)="moveWithinParent(row.id, -1)"
+                title="Subir"
+              >
+                ↑
+              </button>
+              <button
+                type="button"
+                class="btn tiny"
+                (click)="moveWithinParent(row.id, 1)"
+                title="Bajar"
+              >
+                ↓
+              </button>
+            </td>
+            <td>
+              <button
+                type="button"
+                class="btn tiny danger"
+                (click)="removeRow(row.id)"
+              >
+                Eliminar
+              </button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <p class="admin-footnote">
+    Tras guardar, el menú lateral se actualiza al instante. Los datos viven en
+    <code>localStorage</code>. Si no ves el menú nuevo, recarga forzada en el navegador
+    (Ctrl+Shift+R / Cmd+Shift+R) y reinicia el contenedor Angular si usas Docker.
+  </p>
+</div>

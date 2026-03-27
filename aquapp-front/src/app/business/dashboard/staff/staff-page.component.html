@@ -1,0 +1,116 @@
+<div class="page-card wide">
+  <h1>Personal</h1>
+  <p class="subtitle">
+    Solo puedes dar de alta personal en sucursales que te pertenecen. Opcionalmente filtra la tabla por
+    sucursal.
+  </p>
+
+  <p class="alert alert-error" *ngIf="error">{{ error }}</p>
+  <p class="alert alert-ok" *ngIf="okMsg">{{ okMsg }}</p>
+
+  <div class="toolbar">
+    <app-branch-select
+      [branchId]="filterBranchId"
+      (branchIdChange)="onFilterChange($event)"
+      label="Filtrar por sucursal"
+      placeholder="— Todas —"
+    />
+  </div>
+
+  <h2 class="section-title">Registrar personal</h2>
+  <div class="form-grid">
+    <app-branch-select
+      [branchId]="formBranchId"
+      (branchIdChange)="onFormBranchChange($event)"
+      label="Sucursal de asignación"
+    />
+    <div class="field">
+      <span class="field-label">Nombre</span>
+      <input type="text" [(ngModel)]="form.name" />
+    </div>
+    <div class="field">
+      <span class="field-label">Apellido paterno</span>
+      <input type="text" [(ngModel)]="form.paternal_name" />
+    </div>
+    <div class="field">
+      <span class="field-label">Apellido materno</span>
+      <input type="text" [(ngModel)]="form.maternal_name" />
+    </div>
+    <div class="field">
+      <span class="field-label">Correo</span>
+      <input type="email" [(ngModel)]="form.email" />
+    </div>
+    <div class="field">
+      <span class="field-label">Contraseña (mín. 8)</span>
+      <input type="password" [(ngModel)]="form.password" autocomplete="new-password" />
+    </div>
+    <div class="field">
+      <span class="field-label">Fecha nacimiento</span>
+      <input type="date" [(ngModel)]="form.birthday" />
+    </div>
+    <div class="field">
+      <span class="field-label">Rol</span>
+      <select [(ngModel)]="form.role">
+        <option value="manager">{{ roleLabels.manager }}</option>
+        <option value="assistant">{{ roleLabels.assistant }}</option>
+        <option value="delivery">{{ roleLabels.delivery }}</option>
+      </select>
+    </div>
+  </div>
+  <button type="button" class="btn btn-primary" (click)="register()" [disabled]="saving">
+    Registrar
+  </button>
+
+  <h2 class="section-title">Listado</h2>
+  <div class="data-table-wrap">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Correo</th>
+          <th>Rol</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let u of staff">
+          <ng-container *ngIf="editing?.id !== u.id">
+            <td>{{ u.name }}</td>
+            <td>{{ u.email }}</td>
+            <td>{{ roleNames(u) }}</td>
+          </ng-container>
+          <ng-container *ngIf="editing?.id === u.id">
+            <td colspan="3">
+              <div class="inline-form">
+                <div class="field">
+                  <span class="field-label">Nombre</span>
+                  <input type="text" [(ngModel)]="editName" />
+                </div>
+                <div class="field">
+                  <span class="field-label">Correo</span>
+                  <input type="email" [(ngModel)]="editEmail" />
+                </div>
+                <div class="field">
+                  <span class="field-label">Nueva contraseña (opcional)</span>
+                  <input type="password" [(ngModel)]="editPassword" autocomplete="new-password" />
+                </div>
+              </div>
+            </td>
+          </ng-container>
+          <td>
+            <div class="actions" *ngIf="editing?.id !== u.id">
+              <button type="button" class="btn btn-ghost" (click)="startEdit(u)">Editar</button>
+              <button type="button" class="btn btn-danger" (click)="remove(u)">Eliminar</button>
+            </div>
+            <div class="actions" *ngIf="editing?.id === u.id">
+              <button type="button" class="btn btn-primary" (click)="saveEdit()" [disabled]="saving">
+                Guardar
+              </button>
+              <button type="button" class="btn btn-ghost" (click)="cancelEdit()">Cancelar</button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

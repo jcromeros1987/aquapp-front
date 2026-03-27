@@ -1,0 +1,50 @@
+<div class="page-card">
+  <h1>Mis purificadoras</h1>
+  <p class="subtitle">Alta, edición y baja de sucursales vinculadas a tu cuenta.</p>
+
+  <p class="alert alert-error" *ngIf="error">{{ error }}</p>
+  <p class="alert alert-ok" *ngIf="okMsg">{{ okMsg }}</p>
+
+  <div class="toolbar">
+    <div class="field">
+      <span class="field-label">Nueva sucursal</span>
+      <input type="text" [(ngModel)]="newName" placeholder="Nombre" />
+    </div>
+    <button type="button" class="btn btn-primary" (click)="create()" [disabled]="saving">
+      Crear
+    </button>
+  </div>
+
+  <div class="data-table-wrap">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let b of branches">
+          <td *ngIf="editing?.id !== b.id">{{ b.name }}</td>
+          <td *ngIf="editing?.id === b.id">
+            <div class="inline-form">
+              <input type="text" [(ngModel)]="editName" />
+            </div>
+          </td>
+          <td>
+            <div class="actions" *ngIf="editing?.id !== b.id">
+              <button type="button" class="btn btn-ghost" (click)="startEdit(b)">Editar</button>
+              <button type="button" class="btn btn-danger" (click)="remove(b)">Eliminar</button>
+            </div>
+            <div class="actions" *ngIf="editing?.id === b.id">
+              <button type="button" class="btn btn-primary" (click)="saveEdit()" [disabled]="saving">
+                Guardar
+              </button>
+              <button type="button" class="btn btn-ghost" (click)="cancelEdit()">Cancelar</button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

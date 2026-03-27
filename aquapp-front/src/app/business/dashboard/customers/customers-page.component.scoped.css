@@ -1,0 +1,33 @@
+.section-title {
+  margin: 1.25rem 0 0.65rem;
+  font-size: 1rem;
+  color: #374151;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.form-grid .full {
+  grid-column: 1 / -1;
+}
+
+.edit-grid {
+  margin: 0;
+}
+
+.subtitle a {
+  font-weight: 600;
+  color: #2563eb;
+}
+
+.desc {
+  max-width: 14rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+

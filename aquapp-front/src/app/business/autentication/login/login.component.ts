@@ -16,15 +16,26 @@ export class LoginComponent {
   title = 'aquapp-front';
   email = '';
   password = '';
+  errorMessage = '';
 
   constructor(private authService: AuthService, private router: Router){
 
   }
 
   login(): void{
+    this.errorMessage = '';
     this.authService.login(this.email, this.password).subscribe({
-      next: ()=> this.router.navigate(['/dashboard']),
-      error: (err) => console.error('Login failed', err)
-    })
+      next: (res) => {
+        if (res.success && res.jwt) {
+          void this.router.navigate(['/dashboard', 'inicio']);
+        } else {
+          this.errorMessage = res.message ?? 'No se pudo iniciar sesión.';
+        }
+      },
+      error: (err) => {
+        this.errorMessage =
+          err.error?.message ?? 'Credenciales incorrectas o error de conexión.';
+      },
+    });
   }
 }

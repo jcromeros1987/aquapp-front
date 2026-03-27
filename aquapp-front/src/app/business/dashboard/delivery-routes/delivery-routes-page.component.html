@@ -1,0 +1,74 @@
+<div class="page-card">
+  <h1>Rutas de reparto</h1>
+  <p class="subtitle">
+    Catálogo de <strong>rutas</strong> (zonas o recorridos). Asigna cada cliente a una ruta en
+    <strong>Clientes</strong>.
+  </p>
+
+  <p class="alert alert-error" *ngIf="error">{{ error }}</p>
+  <p class="alert alert-ok" *ngIf="okMsg">{{ okMsg }}</p>
+
+  <h2 class="section-title">Listado</h2>
+  <div class="data-table-wrap routes-table">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Orden</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let r of routes">
+          <ng-container *ngIf="routeEditing?.id !== r.id">
+            <td>{{ r.name }}</td>
+            <td>{{ r.sort_order }}</td>
+            <td>
+              <div class="actions">
+                <button type="button" class="btn btn-ghost" (click)="startEditRoute(r)">Editar</button>
+                <button type="button" class="btn btn-danger" (click)="removeRoute(r)">Eliminar</button>
+              </div>
+            </td>
+          </ng-container>
+          <ng-container *ngIf="routeEditing?.id === r.id">
+            <td colspan="2">
+              <div class="form-grid edit-grid route-edit-row">
+                <div class="field">
+                  <span class="field-label">Nombre</span>
+                  <input type="text" [(ngModel)]="routeEditForm.name" />
+                </div>
+                <div class="field">
+                  <span class="field-label">Orden</span>
+                  <input type="number" min="0" [(ngModel)]="routeEditForm.sort_order" />
+                </div>
+              </div>
+            </td>
+            <td>
+              <div class="actions">
+                <button type="button" class="btn btn-primary" (click)="saveRouteEdit()" [disabled]="savingRoute">
+                  Guardar
+                </button>
+                <button type="button" class="btn btn-ghost" (click)="cancelRouteEdit()">Cancelar</button>
+              </div>
+            </td>
+          </ng-container>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 class="section-title">Nueva ruta</h2>
+  <div class="toolbar wrap route-add">
+    <div class="field grow">
+      <span class="field-label">Nombre</span>
+      <input type="text" [(ngModel)]="newRouteName" placeholder="Ej. Zona oriente" />
+    </div>
+    <div class="field">
+      <span class="field-label">Orden</span>
+      <input type="number" min="0" [(ngModel)]="newRouteOrder" />
+    </div>
+    <button type="button" class="btn btn-primary" (click)="addRoute()" [disabled]="savingRoute">
+      Agregar
+    </button>
+  </div>
+</div>

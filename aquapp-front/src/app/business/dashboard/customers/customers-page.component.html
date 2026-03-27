@@ -1,0 +1,116 @@
+<div class="page-card">
+  <h1>Clientes</h1>
+  <p class="subtitle">
+    Datos de contacto y dirección. Gestiona el catálogo en
+    <strong>Catálogos</strong> →
+    <a routerLink="/dashboard/catalogo-rutas">Rutas de reparto</a>; aquí solo eliges la ruta de cada
+    cliente.
+  </p>
+
+  <p class="alert alert-error" *ngIf="error">{{ error }}</p>
+  <p class="alert alert-ok" *ngIf="okMsg">{{ okMsg }}</p>
+
+  <h2 class="section-title">Nuevo cliente</h2>
+  <div class="form-grid">
+    <div class="field">
+      <span class="field-label">Nombre</span>
+      <input type="text" [(ngModel)]="form.name" />
+    </div>
+    <div class="field full">
+      <span class="field-label">Ruta de reparto</span>
+      <select [(ngModel)]="form.delivery_route_id">
+        <option [ngValue]="null">— Sin ruta —</option>
+        <option *ngFor="let r of routes" [ngValue]="r.id">{{ r.name }}</option>
+      </select>
+    </div>
+    <div class="field full">
+      <span class="field-label">Calle</span>
+      <input type="text" [(ngModel)]="form.street" />
+    </div>
+    <div class="field">
+      <span class="field-label">No. ext.</span>
+      <input type="text" [(ngModel)]="form.num_ext" />
+    </div>
+    <div class="field">
+      <span class="field-label">No. int.</span>
+      <input type="text" [(ngModel)]="form.num_int" />
+    </div>
+    <div class="field full">
+      <span class="field-label">Descripción</span>
+      <textarea [(ngModel)]="form.description"></textarea>
+    </div>
+  </div>
+  <button type="button" class="btn btn-primary" (click)="create()" [disabled]="saving">
+    Registrar
+  </button>
+
+  <h2 class="section-title">Listado</h2>
+  <div class="data-table-wrap">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Ruta</th>
+          <th>Dirección</th>
+          <th>Descripción</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let c of customers">
+          <ng-container *ngIf="editing?.id !== c.id">
+            <td>{{ c.name }}</td>
+            <td>{{ routeLabel(c) }}</td>
+            <td>{{ c.street }} {{ c.num_ext }} {{ c.num_int }}</td>
+            <td class="desc">{{ c.description }}</td>
+          </ng-container>
+          <ng-container *ngIf="editing?.id === c.id">
+            <td colspan="4">
+              <div class="form-grid edit-grid">
+                <div class="field">
+                  <span class="field-label">Nombre</span>
+                  <input type="text" [(ngModel)]="editForm.name" />
+                </div>
+                <div class="field full">
+                  <span class="field-label">Ruta de reparto</span>
+                  <select [(ngModel)]="editForm.delivery_route_id">
+                    <option [ngValue]="null">— Sin ruta —</option>
+                    <option *ngFor="let r of routes" [ngValue]="r.id">{{ r.name }}</option>
+                  </select>
+                </div>
+                <div class="field full">
+                  <span class="field-label">Calle</span>
+                  <input type="text" [(ngModel)]="editForm.street" />
+                </div>
+                <div class="field">
+                  <span class="field-label">No. ext.</span>
+                  <input type="text" [(ngModel)]="editForm.num_ext" />
+                </div>
+                <div class="field">
+                  <span class="field-label">No. int.</span>
+                  <input type="text" [(ngModel)]="editForm.num_int" />
+                </div>
+                <div class="field full">
+                  <span class="field-label">Descripción</span>
+                  <textarea [(ngModel)]="editForm.description"></textarea>
+                </div>
+              </div>
+            </td>
+          </ng-container>
+          <td>
+            <div class="actions" *ngIf="editing?.id !== c.id">
+              <button type="button" class="btn btn-ghost" (click)="startEdit(c)">Editar</button>
+              <button type="button" class="btn btn-danger" (click)="remove(c)">Eliminar</button>
+            </div>
+            <div class="actions" *ngIf="editing?.id === c.id">
+              <button type="button" class="btn btn-primary" (click)="saveEdit()" [disabled]="saving">
+                Guardar
+              </button>
+              <button type="button" class="btn btn-ghost" (click)="cancelEdit()">Cancelar</button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

@@ -1,0 +1,83 @@
+<div class="page-card">
+  <h1>Productos por sucursal</h1>
+  <p class="subtitle">Gestiona precios y tipos de producto en cada purificadora.</p>
+
+  <p class="alert alert-error" *ngIf="error">{{ error }}</p>
+  <p class="alert alert-ok" *ngIf="okMsg">{{ okMsg }}</p>
+
+  <div class="toolbar">
+    <app-branch-select
+      [branchId]="branchId"
+      (branchIdChange)="onBranchChange($event)"
+      label="Sucursal"
+    />
+  </div>
+
+  <ng-container *ngIf="branchId != null">
+    <h2 class="section-title">Nuevo producto</h2>
+    <div class="toolbar">
+      <div class="field">
+        <span class="field-label">Nombre</span>
+        <input type="text" [(ngModel)]="formName" placeholder="Nombre" />
+      </div>
+      <div class="field">
+        <span class="field-label">Costo</span>
+        <input type="number" step="0.01" min="0" [(ngModel)]="formCost" />
+      </div>
+      <div class="field">
+        <span class="field-label">Tipo (catálogo)</span>
+        <select [(ngModel)]="formCatId">
+          <option [ngValue]="null">—</option>
+          <option *ngFor="let c of catalog" [ngValue]="c.id">{{ c.name }}</option>
+        </select>
+      </div>
+      <button type="button" class="btn btn-primary" (click)="create()" [disabled]="saving">
+        Agregar
+      </button>
+    </div>
+
+    <h2 class="section-title">Listado</h2>
+    <div class="data-table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>Tipo</th>
+            <th>Costo</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let p of products">
+            <ng-container *ngIf="editing?.id !== p.id">
+              <td>{{ p.name }}</td>
+              <td>{{ categoryLabel(p) }}</td>
+              <td>{{ p.cost }}</td>
+            </ng-container>
+            <ng-container *ngIf="editing?.id === p.id">
+              <td><input type="text" [(ngModel)]="editName" /></td>
+              <td>
+                <select [(ngModel)]="editCatId">
+                  <option *ngFor="let c of catalog" [ngValue]="c.id">{{ c.name }}</option>
+                </select>
+              </td>
+              <td><input type="number" step="0.01" min="0" [(ngModel)]="editCost" /></td>
+            </ng-container>
+            <td>
+              <div class="actions" *ngIf="editing?.id !== p.id">
+                <button type="button" class="btn btn-ghost" (click)="startEdit(p)">Editar</button>
+                <button type="button" class="btn btn-danger" (click)="remove(p)">Eliminar</button>
+              </div>
+              <div class="actions" *ngIf="editing?.id === p.id">
+                <button type="button" class="btn btn-primary" (click)="saveEdit()" [disabled]="saving">
+                  Guardar
+                </button>
+                <button type="button" class="btn btn-ghost" (click)="cancelEdit()">Cancelar</button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </ng-container>
+</div>

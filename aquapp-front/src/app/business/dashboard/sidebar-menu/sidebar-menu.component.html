@@ -1,0 +1,37 @@
+@for (node of nodes(); track node.id) {
+  <div class="nav-item" [style.--depth]="depth()">
+    @if (node.children.length > 0) {
+      <button type="button" class="nav-parent" (click)="toggle(node.id)">
+        @if (node.icon) {
+          <span class="nav-ico">{{ node.icon }}</span>
+        }
+        <span class="nav-label">{{ node.label }}</span>
+        <span class="nav-chev">{{ isOpen(node.id) ? '▼' : '▶' }}</span>
+      </button>
+      @if (isOpen(node.id)) {
+        <div class="nav-children">
+          <app-sidebar-menu [nodes]="node.children" [depth]="depth() + 1" />
+        </div>
+      }
+    } @else if (node.route) {
+      <a
+        [routerLink]="dashboardLink(node.route)"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }"
+        class="nav-link"
+      >
+        @if (node.icon) {
+          <span class="nav-ico">{{ node.icon }}</span>
+        }
+        <span class="nav-label">{{ node.label }}</span>
+      </a>
+    } @else {
+      <span class="nav-muted">
+        @if (node.icon) {
+          <span class="nav-ico">{{ node.icon }}</span>
+        }
+        {{ node.label }}
+      </span>
+    }
+  </div>
+}

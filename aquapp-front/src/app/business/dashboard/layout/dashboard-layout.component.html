@@ -1,0 +1,27 @@
+<div class="dashboard-shell">
+  <aside class="sidebar" aria-label="Menú principal">
+    <div class="sidebar-brand">
+      <span class="brand-mark">💧</span>
+      <div class="brand-text">
+        <strong>AquaApp</strong>
+        <small>Menú principal</small>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <app-sidebar-menu [nodes]="menu.tree()" [depth]="0" />
+    </nav>
+
+    <div class="sidebar-footer">
+      <button type="button" class="btn-logout" (click)="logout()">
+        Cerrar sesión
+      </button>
+    </div>
+  </aside>
+
+  <div class="main-column">
+    <main class="main-content">
+      <router-outlet />
+    </main>
+  </div>
+</div>

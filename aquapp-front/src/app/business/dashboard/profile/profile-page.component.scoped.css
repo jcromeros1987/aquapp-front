@@ -1,0 +1,10 @@
+.user-pre {
+  margin: 0;
+  padding: 1rem;
+  background: #1e1b4b;
+  color: #e0e7ff;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  overflow-x: auto;
+  line-height: 1.4;
+}

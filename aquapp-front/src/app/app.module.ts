@@ -5,7 +5,8 @@ import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { LoginComponent } from './business/autentication/login/login.component';
 import { RegisterComponent } from './business/autentication/register/register.component';
-import { provideHttpClient, withFetch } from '@angular/common/http';
+import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
+import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { FormsModule } from '@angular/forms';
 
 @NgModule({
@@ -18,7 +19,11 @@ import { FormsModule } from '@angular/forms';
     AppRoutingModule,
     FormsModule
   ],
-  providers: [provideHttpClient(withFetch())
+  providers: [
+    provideHttpClient(
+      withFetch(),
+      withInterceptors([authInterceptor]),
+    ),
   ],
   bootstrap: [AppComponent]
 })

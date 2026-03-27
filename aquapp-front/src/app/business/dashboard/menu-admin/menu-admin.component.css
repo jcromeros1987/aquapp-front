@@ -1,0 +1,132 @@
+.admin-page {
+  max-width: 100%;
+}
+
+.admin-head h1 {
+  margin: 0 0 0.35rem;
+  font-size: 1.25rem;
+  color: #111827;
+}
+
+.admin-desc {
+  margin: 0 0 0.75rem;
+  color: #4b5563;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.admin-desc code {
+  background: #e5e7eb;
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+}
+
+.admin-hint {
+  margin: 0 0 0.75rem;
+  color: #059669;
+  font-size: 0.875rem;
+}
+
+.admin-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.btn {
+  padding: 0.5rem 0.85rem;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  background: #fff;
+  font-size: 0.875rem;
+  cursor: pointer;
+  color: #374151;
+}
+
+.btn:hover {
+  background: #f9fafb;
+}
+
+.btn.primary {
+  background: #5b21b6;
+  border-color: #5b21b6;
+  color: #fff;
+}
+
+.btn.primary:hover {
+  background: #6d28d9;
+}
+
+.btn.danger {
+  border-color: #fca5a5;
+  color: #b91c1c;
+}
+
+.btn.danger:hover {
+  background: #fef2f2;
+}
+
+.btn.tiny {
+  padding: 0.25rem 0.45rem;
+  font-size: 0.75rem;
+}
+
+.table-wrap {
+  overflow-x: auto;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  margin-bottom: 1rem;
+}
+
+.menu-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.menu-table th,
+.menu-table td {
+  padding: 0.5rem 0.65rem;
+  border-bottom: 1px solid #e5e7eb;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.menu-table th {
+  background: #f9fafb;
+  font-weight: 600;
+  color: #374151;
+  white-space: nowrap;
+}
+
+.inp {
+  width: 100%;
+  min-width: 6rem;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  box-sizing: border-box;
+}
+
+.inp.sm {
+  min-width: 3.5rem;
+  max-width: 5rem;
+}
+
+.cell-center {
+  text-align: center;
+}
+
+.cell-actions {
+  white-space: nowrap;
+}
+
+.admin-footnote {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #6b7280;
+}

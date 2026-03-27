@@ -1,0 +1,50 @@
+<div class="page-card">
+  <h1>Productos (catálogo)</h1>
+  <p class="subtitle">
+    Tipos de producto en <code>cat_products</code> con <code>catalog_kind = PRODUCTOS</code> (para artículos por sucursal).
+  </p>
+
+  <p class="alert alert-error" *ngIf="error">{{ error }}</p>
+  <p class="alert alert-ok" *ngIf="okMsg">{{ okMsg }}</p>
+
+  <div class="toolbar">
+    <div class="field">
+      <span class="field-label">Nuevo tipo</span>
+      <input type="text" [(ngModel)]="newName" placeholder="Ej. Garrafón 20L" />
+    </div>
+    <button type="button" class="btn btn-primary" (click)="create()" [disabled]="saving">
+      Crear
+    </button>
+  </div>
+
+  <div class="data-table-wrap">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let r of rows">
+          <td *ngIf="editing?.id !== r.id">{{ r.name }}</td>
+          <td *ngIf="editing?.id === r.id">
+            <input type="text" [(ngModel)]="editName" />
+          </td>
+          <td>
+            <div class="actions" *ngIf="editing?.id !== r.id">
+              <button type="button" class="btn btn-ghost" (click)="startEdit(r)">Editar</button>
+              <button type="button" class="btn btn-danger" (click)="remove(r)">Eliminar</button>
+            </div>
+            <div class="actions" *ngIf="editing?.id === r.id">
+              <button type="button" class="btn btn-primary" (click)="saveEdit()" [disabled]="saving">
+                Guardar
+              </button>
+              <button type="button" class="btn btn-ghost" (click)="cancelEdit()">Cancelar</button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

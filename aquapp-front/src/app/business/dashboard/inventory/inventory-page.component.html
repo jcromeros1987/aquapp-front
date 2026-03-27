@@ -1,0 +1,207 @@
+<div class="page-card">
+  <h1>Inventario</h1>
+  <p class="subtitle">
+    <strong>Total del renglón:</strong> cantidad operativa (sin unidades dadas de baja). Para garrafones y similares,
+    abre <strong>Unidades por pieza</strong>: cada pieza tiene código (ej. <code>INV-B1-00003-U001</code>), puedes
+    asignarla a un cliente y registrar cuando regresa a planta o si hay disputa.
+  </p>
+  <p class="hint-suggestions">
+    Si aún no tienes clientes en el sistema, créalos en <strong>Clientes</strong> antes de asignar unidades.
+  </p>
+
+  <p class="alert alert-error" *ngIf="error">{{ error }}</p>
+  <p class="alert alert-ok" *ngIf="okMsg">{{ okMsg }}</p>
+
+  <div class="toolbar">
+    <app-branch-select
+      [branchId]="branchId"
+      (branchIdChange)="onBranchChange($event)"
+      label="Sucursal"
+    />
+  </div>
+
+  <ng-container *ngIf="branchId != null">
+    <h2 class="section-title">Nuevo renglón</h2>
+    <div class="toolbar">
+      <div class="field">
+        <span class="field-label">Tipo (catálogo)</span>
+        <select [(ngModel)]="formCatId">
+          <option [ngValue]="null">—</option>
+          <option *ngFor="let c of availableTypes()" [ngValue]="c.id">{{ c.name }}</option>
+        </select>
+      </div>
+      <div class="field">
+        <span class="field-label">Cantidad</span>
+        <input type="number" min="0" step="1" [(ngModel)]="formQty" />
+      </div>
+      <div class="field field-wide">
+        <span class="field-label">Notas (opcional)</span>
+        <input type="text" [(ngModel)]="formObs" placeholder="Serie, ubicación…" />
+      </div>
+      <button type="button" class="btn btn-primary" (click)="create()" [disabled]="saving">
+        Agregar
+      </button>
+    </div>
+
+    <h2 class="section-title">Existencias</h2>
+    <div class="data-table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Clave</th>
+            <th>Tipo</th>
+            <th>Cantidad</th>
+            <th>Unidades</th>
+            <th>Notas</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <ng-container *ngFor="let row of items">
+            <tr *ngIf="editing?.id !== row.id">
+              <td><code class="clave-cell">{{ row.clave || '—' }}</code></td>
+              <td>{{ typeLabel(row) }}</td>
+              <td>{{ row.quantity }}</td>
+              <td>
+                <span class="track-summary">{{ trackingSummary(row) }}</span>
+                <button type="button" class="btn btn-ghost btn-compact" (click)="toggleUnits(row)">
+                  {{ expandedInventoryId === row.id ? 'Cerrar' : 'Unidades por pieza' }}
+                </button>
+              </td>
+              <td>{{ row.observations || '—' }}</td>
+              <td>
+                <div class="actions">
+                  <button type="button" class="btn btn-ghost" (click)="startEdit(row)">Editar</button>
+                  <button type="button" class="btn btn-danger" (click)="remove(row)">Eliminar</button>
+                </div>
+              </td>
+            </tr>
+            <tr *ngIf="editing?.id === row.id">
+              <td><code class="clave-cell">{{ row.clave || '—' }}</code></td>
+              <td>{{ typeLabel(row) }}</td>
+              <td>
+                <ng-container *ngIf="!hasTrackedUnits(row); else qtyReadonly">
+                  <input type="number" min="0" step="1" [(ngModel)]="editQty" />
+                </ng-container>
+                <ng-template #qtyReadonly>
+                  <span>{{ row.quantity }}</span>
+                  <span class="qty-hint"> (ajuste por unidades)</span>
+                </ng-template>
+              </td>
+              <td><span class="track-summary">{{ trackingSummary(row) }}</span></td>
+              <td><input type="text" [(ngModel)]="editObs" /></td>
+              <td>
+                <div class="actions">
+                  <button type="button" class="btn btn-primary" (click)="saveEdit()" [disabled]="saving">
+                    Guardar
+                  </button>
+                  <button type="button" class="btn btn-ghost" (click)="cancelEdit()">Cancelar</button>
+                </div>
+              </td>
+            </tr>
+            <tr *ngIf="expandedInventoryId === row.id" class="units-expand-row">
+              <td colspan="6">
+                <ng-container *ngIf="!unitsLoading; else unitsLoadingTpl">
+                  <div class="units-panel">
+                  <h3 class="units-title">Piezas de {{ typeLabel(row) }} — {{ row.clave }}</h3>
+                  <p class="units-help">
+                    Asigna un cliente cuando el garrafón quede en su domicilio; <strong>Devolución</strong> cuando
+                    regrese a la planta. <strong>Disputa</strong> si dicen que “tú lo dejaste” y no coinciden las
+                    cuentas.
+                  </p>
+                  <div class="toolbar units-toolbar">
+                    <div class="field">
+                      <span class="field-label">Agregar piezas (código automático)</span>
+                      <input type="number" min="1" max="500" step="1" [(ngModel)]="bulkAddCount" placeholder="Ej. 10" />
+                    </div>
+                    <button type="button" class="btn btn-primary" (click)="addBulkUnits()" [disabled]="saving">
+                      Crear unidades
+                    </button>
+                  </div>
+                  <div class="data-table-wrap units-inner-table">
+                    <table class="data-table">
+                      <thead>
+                        <tr>
+                          <th>Código</th>
+                          <th>Estado</th>
+                          <th>Cliente</th>
+                          <th>Asignación</th>
+                          <th></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr *ngFor="let u of unitRows">
+                          <td><code class="clave-cell">{{ u.codigo }}</code></td>
+                          <td>{{ statusLabel(u.status) }}</td>
+                          <td>
+                            <ng-container *ngIf="u.customer && (u.status === 'con_cliente' || u.status === 'en_disputa'); else pickCustomer">
+                              {{ customerName(u.customer) }}
+                            </ng-container>
+                            <ng-template #pickCustomer>
+                              <select
+                                [ngModel]="unitDraftCustomer(u.id)"
+                                (ngModelChange)="setUnitDraftCustomer(u.id, $event)"
+                              >
+                                <option [ngValue]="null">— Cliente —</option>
+                                <option *ngFor="let c of customers" [ngValue]="c.id">{{ customerName(c) }}</option>
+                              </select>
+                            </ng-template>
+                          </td>
+                          <td class="cell-dates">
+                            <span *ngIf="u.assigned_at" class="date-bit">Salida: {{ u.assigned_at | date: 'short' }}</span>
+                            <span *ngIf="u.returned_at" class="date-bit">Regreso: {{ u.returned_at | date: 'short' }}</span>
+                          </td>
+                          <td>
+                            <div class="actions units-actions">
+                              <button
+                                type="button"
+                                class="btn btn-ghost"
+                                *ngIf="u.status === 'en_planta' || u.status === 'en_disputa'"
+                                (click)="assignUnit(u)"
+                              >
+                                Asignar cliente
+                              </button>
+                              <button
+                                type="button"
+                                class="btn btn-ghost"
+                                *ngIf="u.status === 'con_cliente'"
+                                (click)="returnUnit(u)"
+                              >
+                                Devolución
+                              </button>
+                              <button
+                                type="button"
+                                class="btn btn-ghost"
+                                *ngIf="u.status !== 'en_disputa' && u.status !== 'baja'"
+                                (click)="disputaUnit(u)"
+                              >
+                                Disputa
+                              </button>
+                              <button
+                                type="button"
+                                class="btn btn-ghost"
+                                *ngIf="u.status !== 'baja'"
+                                (click)="bajaUnit(u)"
+                              >
+                                Baja
+                              </button>
+                              <button type="button" class="btn btn-danger" (click)="removeUnit(u)">Eliminar</button>
+                            </div>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  </div>
+                </ng-container>
+                <ng-template #unitsLoadingTpl>
+                  <p class="units-loading">Cargando unidades…</p>
+                </ng-template>
+              </td>
+            </tr>
+          </ng-container>
+        </tbody>
+      </table>
+    </div>
+  </ng-container>
+</div>

@@ -1,0 +1,95 @@
+.section-title {
+  margin: 1.25rem 0 0.75rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.field-wide {
+  min-width: 14rem;
+  flex: 1;
+}
+
+.clave-cell {
+  font-size: 0.82rem;
+  background: #f3f4f6;
+  padding: 0.2rem 0.45rem;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.track-summary {
+  display: block;
+  font-size: 0.82rem;
+  color: #4b5563;
+  margin-bottom: 0.35rem;
+}
+
+.btn-compact {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.8rem;
+}
+
+.qty-hint {
+  font-size: 0.78rem;
+  color: #6b7280;
+}
+
+.units-expand-row td {
+  background: #fafafa;
+  padding: 0 !important;
+  vertical-align: top;
+}
+
+.units-panel {
+  padding: 1rem 1.25rem 1.25rem;
+}
+
+.units-title {
+  margin: 0 0 0.35rem;
+  font-size: 1rem;
+}
+
+.units-help {
+  margin: 0 0 1rem;
+  font-size: 0.85rem;
+  color: #4b5563;
+  line-height: 1.45;
+}
+
+.units-toolbar {
+  margin-bottom: 0.75rem;
+}
+
+.units-inner-table {
+  margin-top: 0.5rem;
+}
+
+.units-actions {
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.cell-dates {
+  font-size: 0.78rem;
+  color: #6b7280;
+}
+
+.date-bit {
+  display: block;
+}
+
+.units-loading {
+  padding: 1rem;
+  color: #6b7280;
+}
+
+.hint-suggestions {
+  margin: 0 0 1rem;
+  padding: 0.75rem 1rem;
+  background: #f9fafb;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  color: #4b5563;
+  line-height: 1.5;
+}

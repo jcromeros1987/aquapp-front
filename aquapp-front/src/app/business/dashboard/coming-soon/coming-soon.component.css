@@ -1,0 +1,19 @@
+.soon-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 1.5rem 1.75rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  max-width: 36rem;
+}
+
+.soon-card h1 {
+  margin: 0 0 0.5rem;
+  font-size: 1.25rem;
+  color: #1f2937;
+}
+
+.soon-card p {
+  margin: 0;
+  color: #6b7280;
+  line-height: 1.5;
+}

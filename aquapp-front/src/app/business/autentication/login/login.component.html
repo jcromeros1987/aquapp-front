@@ -45,6 +45,7 @@
 							</a>
 						</div>
 					</div>
+					<p *ngIf="errorMessage" class="text-sm text-red-600">{{ errorMessage }}</p>
 					<div>
 						<button (click)="login()" type="submit" class="w-full flex justify-center bg-purple-800  hover:bg-purple-700 text-gray-100 p-3  rounded-lg tracking-wide font-semibold  cursor-pointer transition ease-in duration-500">
                 Sign in
