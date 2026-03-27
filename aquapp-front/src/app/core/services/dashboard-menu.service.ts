@@ -174,12 +174,10 @@ export class DashboardMenuService {
     const defaults = this.cloneDefaults();
     try {
       let raw = localStorage.getItem(STORAGE_KEY);
-      let migratedFromLegacy = false;
       if (!raw) {
         const legacy = localStorage.getItem('aquapp_dashboard_menu_v11');
         if (legacy) {
           raw = legacy;
-          migratedFromLegacy = true;
         }
       }
       if (!raw) return defaults;
@@ -187,13 +185,12 @@ export class DashboardMenuService {
       if (!Array.isArray(parsed) || parsed.length === 0) {
         return defaults;
       }
-      const merged = this.mergeMenuWithDefaults(parsed, defaults);
-      if (migratedFromLegacy) {
-        try {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
-        } catch {
-          /* quota / privado */
-        }
+      let merged = this.mergeMenuWithDefaults(parsed, defaults);
+      merged = this.ensureCatalogRoutesItem(merged, defaults);
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+      } catch {
+        /* quota / privado */
       }
       return merged;
     } catch {
@@ -227,7 +224,13 @@ export class DashboardMenuService {
         route: d.route,
         label: s.label?.trim() ? s.label : d.label,
         order: typeof s.order === 'number' ? s.order : d.order,
-        enabled: typeof s.enabled === 'boolean' ? s.enabled : d.enabled,
+        // Rutas de reparto (m16) debe seguir visible aunque se hubiera desactivado antes.
+        enabled:
+          d.id === 'm16'
+            ? true
+            : typeof s.enabled === 'boolean'
+              ? s.enabled
+              : d.enabled,
         icon: s.icon?.trim() ? s.icon : d.icon,
       });
     }
@@ -239,13 +242,43 @@ export class DashboardMenuService {
     return merged;
   }
 
+  /**
+   * Si falta m16 o hay que reforzar padre/ruta tras datos viejos.
+   */
+  private ensureCatalogRoutesItem(
+    menu: MenuItemRecord[],
+    defaults: MenuItemRecord[],
+  ): MenuItemRecord[] {
+    const m16def = defaults.find((r) => r.id === 'm16');
+    if (!m16def) return menu;
+    const byId = new Map(menu.map((r) => [r.id, r]));
+    if (!byId.has('m16')) {
+      return [...menu, { ...m16def }];
+    }
+    return menu.map((row) =>
+      row.id === 'm16'
+        ? {
+            ...row,
+            ...m16def,
+            parentId: 'm11',
+            route: 'catalogo-rutas',
+            enabled: true,
+            label: row.label?.trim() ? row.label : m16def.label,
+          }
+        : row,
+    );
+  }
+
   private cloneDefaults(): MenuItemRecord[] {
     return DEFAULT_DASHBOARD_MENU.map((r) => ({ ...r }));
   }
 
   /** Guarda la tabla plana y refresca el menú en sidebar */
   saveItems(rows: MenuItemRecord[]): void {
-    const normalized = this.normalizeOrders(rows);
+    const defaults = this.cloneDefaults();
+    let merged = this.mergeMenuWithDefaults(rows, defaults);
+    merged = this.ensureCatalogRoutesItem(merged, defaults);
+    const normalized = this.normalizeOrders(merged);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
     this._items.set(normalized);
   }
