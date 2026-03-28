@@ -1,28 +1,29 @@
 <div class="page-card wide">
-  <h1>Venta diaria</h1>
+  <app-sales-venta-subnav />
+
+  <h1>Venta a domicilio</h1>
   <p class="subtitle">
-    <strong>Entrega rápida</strong> (repartidor): elige cliente y marca los garrafones que dejas (piezas en
-    planta); se guardan juntos en inventario.
-    <strong>Nueva venta</strong>: registro de producto, cantidad y total como antes.
+    <strong>Entrega de garrafones</strong> (repartidor): cliente + piezas en planta.
+    <strong>Nueva venta</strong>: formulario acotado; la fecha se deja en <strong>hoy</strong> al cambiar de
+    sucursal. El listado completo de ventas por sucursal está en <a routerLink="/dashboard/venta/historial"
+      >Historial</a
+    >.
   </p>
 
   <p class="alert alert-error" *ngIf="error">{{ error }}</p>
   <p class="alert alert-ok" *ngIf="okMsg">{{ okMsg }}</p>
 
-  <div class="toolbar">
-    <app-branch-select
-      [branchId]="branchId"
-      (branchIdChange)="onBranchChange($event)"
-      label="Sucursal"
-    />
-  </div>
+  <p class="branch-context-hint" *ngIf="branchId == null">
+    Elige una <strong>sucursal concreta</strong> en el menú lateral para venta a domicilio y entregas.
+  </p>
 
   <ng-container *ngIf="branchId != null">
     <h2 class="section-title">Entrega rápida (repartidor)</h2>
     <div class="delivery-quick-card">
       <p class="delivery-lead">
-        Llevas <strong>{{ availableUnits.length }}</strong> pieza(s) en planta. Elige con quién entregas y
-        marca los códigos (p. ej. varios garrafones a la vez).
+        <strong>{{ availableUnits.length }}</strong> pieza(s) en planta en esta sucursal. Elige al cliente y
+        pasa los garrafones a <strong>“con el cliente”</strong>; ya no aparecen como disponibles hasta que los
+        quites de la entrega.
       </p>
       <div class="toolbar wrap">
         <div class="field grow">
@@ -73,22 +74,57 @@
         </div>
       </div>
 
-      <div class="units-check-wrap" *ngIf="availableUnits.length > 0; else sinPiezas">
-        <span class="field-label">Piezas a entregar (marca las que llevas)</span>
-        <div class="units-check-grid">
-          <label *ngFor="let u of availableUnits" class="unit-chip">
-            <input
-              type="checkbox"
-              [checked]="isDeliveryUnitSelected(u.id)"
-              (change)="toggleDeliveryUnit(u.id)"
-            />
-            <span>{{ unitChipLabel(u) }}</span>
-          </label>
+      <ng-container *ngIf="availableUnits.length > 0; else sinPiezas">
+        <div class="units-with-client-panel" *ngIf="deliveryUnitsConCliente.length > 0">
+          <span class="field-label units-panel-label">Con el cliente (esta entrega)</span>
+          <p class="field-hint units-panel-hint">
+            {{ deliveryUnitsConCliente.length }} pieza(s) — listas para guardar la entrega o quitar si te
+            equivocaste.
+          </p>
+          <div class="units-basket-grid units-basket-grid--garrafon">
+            <div *ngFor="let u of deliveryUnitsConCliente" class="garrafon-tile-wrap garrafon-tile-wrap--basket">
+              <div class="garrafon-tile garrafon-tile--selected" [attr.title]="unitChipLabel(u)">
+                <span class="garrafon-tile__figure">
+                  <app-garrafon-jug [selected]="true" />
+                  <span class="garrafon-tile__label">{{ unitGarrafonShortLabel(u) }}</span>
+                </span>
+              </div>
+              <button
+                type="button"
+                class="garrafon-tile__remove"
+                (click)="toggleDeliveryUnit(u.id)"
+                [disabled]="savingDelivery"
+                title="Quitar — {{ unitChipLabel(u) }}"
+              >
+                ×
+              </button>
+            </div>
+          </div>
         </div>
-        <p class="field-hint">
-          Seleccionadas: <strong>{{ deliverySelectionCount }}</strong>
-        </p>
-      </div>
+
+        <div class="units-check-wrap">
+          <span class="field-label">En planta (disponibles)</span>
+          <p class="field-hint units-panel-hint" *ngIf="deliveryUnitsEnPlanta.length === 0">
+            No quedan piezas sueltas en planta; las tienes todas en la entrega de arriba o no hay stock.
+          </p>
+          <div class="units-check-grid units-check-grid--garrafon" *ngIf="deliveryUnitsEnPlanta.length > 0">
+            <button
+              type="button"
+              class="garrafon-tile"
+              *ngFor="let u of deliveryUnitsEnPlanta"
+              (click)="toggleDeliveryUnit(u.id)"
+              [disabled]="savingDelivery"
+              [attr.title]="'Añadir a la entrega — ' + unitChipLabel(u)"
+            >
+              <span class="garrafon-tile__figure">
+                <app-garrafon-jug />
+                <span class="garrafon-tile__label">{{ unitGarrafonShortLabel(u) }}</span>
+              </span>
+              <span class="garrafon-tile__add" aria-hidden="true">+</span>
+            </button>
+          </div>
+        </div>
+      </ng-container>
       <ng-template #sinPiezas>
         <p class="field-hint">No hay piezas en planta. Cárgalas en Inventario.</p>
       </ng-template>
@@ -97,7 +133,9 @@
         type="button"
         class="btn btn-primary delivery-save-btn"
         (click)="submitQuickDelivery()"
-        [disabled]="savingDelivery || savingQuickCustomer || availableUnits.length === 0"
+        [disabled]="
+          savingDelivery || savingQuickCustomer || availableUnits.length === 0 || deliverySelectionCount === 0
+        "
       >
         {{ savingDelivery ? 'Guardando entrega…' : 'Guardar entrega' }}
       </button>
@@ -117,7 +155,7 @@
         <tbody>
           <tr *ngFor="let b of deliveryTodayBatches">
             <td>{{ b.assigned_at | date : 'shortTime' }}</td>
-            <td>{{ b.customer?.name || ('#' + b.customer?.id) }}</td>
+            <td>{{ b.customer.name || ('#' + b.customer.id) }}</td>
             <td>{{ batchUnitsLabel(b) }}</td>
             <td>{{ b.units.length }}</td>
           </tr>
@@ -128,50 +166,55 @@
       <p class="sales-summary-meta">Sin entregas registradas hoy en esta sucursal.</p>
     </ng-template>
 
-    <h2 class="section-title">Nueva venta</h2>
-    <div class="toolbar wrap">
-      <div class="field">
-        <span class="field-label">Producto</span>
-        <select [(ngModel)]="formProductId" (ngModelChange)="onProductPicked()">
-          <option [ngValue]="null">—</option>
-          <option *ngFor="let p of products" [ngValue]="p.id">{{ p.name }} ({{ p.cost }})</option>
-        </select>
-      </div>
-      <div class="field">
-        <span class="field-label">Fecha</span>
-        <input type="date" [(ngModel)]="formDate" />
-      </div>
-      <div class="field">
-        <span class="field-label">Costo unit.</span>
-        <input
-          type="number"
-          step="0.01"
-          min="0"
-          [(ngModel)]="formCost"
-          (ngModelChange)="recalcTotal()"
-        />
-      </div>
-      <div class="field">
-        <span class="field-label">Cantidad</span>
-        <input
-          type="number"
-          min="1"
-          [(ngModel)]="formQty"
-          (ngModelChange)="recalcTotal()"
-        />
-      </div>
-      <div class="field">
-        <span class="field-label">Total</span>
-        <input type="number" step="0.01" [(ngModel)]="formTotal" readonly />
-      </div>
-      <div class="field grow">
-        <span class="field-label">Observaciones</span>
-        <input type="text" [(ngModel)]="formObs" />
-      </div>
-      <button type="button" class="btn btn-primary" (click)="create()" [disabled]="saving">
-        Registrar venta
-      </button>
+    <div class="toolbar">
+      <button type="button" class="btn btn-primary" (click)="addSaleModalOpen = true">Nueva venta (hoy)</button>
     </div>
+
+    <app-modal [(open)]="addSaleModalOpen" title="Nueva venta (hoy)" size="lg">
+      <div class="toolbar wrap">
+        <div class="field">
+          <span class="field-label">Producto</span>
+          <select [(ngModel)]="formProductId" (ngModelChange)="onProductPicked()">
+            <option [ngValue]="null">—</option>
+            <option *ngFor="let p of products" [ngValue]="p.id">{{ p.name }} ({{ p.cost }})</option>
+          </select>
+        </div>
+        <div class="field">
+          <span class="field-label">Fecha</span>
+          <input type="date" [(ngModel)]="formDate" />
+        </div>
+        <div class="field">
+          <span class="field-label">Costo unit.</span>
+          <input
+            type="number"
+            step="0.01"
+            min="0"
+            [(ngModel)]="formCost"
+            (ngModelChange)="recalcTotal()"
+          />
+        </div>
+        <div class="field">
+          <span class="field-label">Cantidad</span>
+          <input
+            type="number"
+            min="1"
+            [(ngModel)]="formQty"
+            (ngModelChange)="recalcTotal()"
+          />
+        </div>
+        <div class="field">
+          <span class="field-label">Total</span>
+          <input type="number" step="0.01" [(ngModel)]="formTotal" readonly />
+        </div>
+        <div class="field grow">
+          <span class="field-label">Observaciones</span>
+          <input type="text" [(ngModel)]="formObs" />
+        </div>
+        <button type="button" class="btn btn-primary" (click)="create()" [disabled]="saving">
+          Registrar venta
+        </button>
+      </div>
+    </app-modal>
 
     <h2 class="section-title">Ventas de hoy ({{ todayStr }})</h2>
     <div class="sales-summary">
@@ -247,77 +290,5 @@
     <ng-template #sinVentasHoy>
       <p class="sales-summary-meta">Sin ventas registradas hoy en esta sucursal.</p>
     </ng-template>
-
-    <h2 class="section-title">Historial de ventas (esta sucursal)</h2>
-    <div class="sales-summary">
-      <div class="sales-summary-row">
-        <span class="sales-summary-label">Total vendido</span>
-        <strong class="sales-summary-amount">{{ totalVendido | number : '1.2-2' }}</strong>
-      </div>
-      <p class="sales-summary-meta">{{ sales.length }} venta(s) en el listado</p>
-    </div>
-    <div class="data-table-wrap">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>Fecha</th>
-            <th>Producto</th>
-            <th>Cant.</th>
-            <th>Total</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let s of sales">
-            <ng-container *ngIf="editing?.id !== s.id">
-              <td>{{ s.date }}</td>
-              <td>{{ productLabel(s) }}</td>
-              <td>{{ s.quantity }}</td>
-              <td>{{ s.total_amount }}</td>
-            </ng-container>
-            <ng-container *ngIf="editing?.id === s.id">
-              <td><input type="date" [(ngModel)]="editDate" /></td>
-              <td>{{ productLabel(s) }}</td>
-              <td>
-                <input
-                  type="number"
-                  min="1"
-                  [(ngModel)]="editQty"
-                  (ngModelChange)="recalcEditTotal()"
-                />
-              </td>
-              <td>
-                <input type="number" step="0.01" [(ngModel)]="editTotal" />
-              </td>
-            </ng-container>
-            <td>
-              <div class="actions" *ngIf="editing?.id !== s.id">
-                <button type="button" class="btn btn-ghost" (click)="startEdit(s)">Editar</button>
-                <button type="button" class="btn btn-danger" (click)="remove(s)">Eliminar</button>
-              </div>
-              <div class="actions stack" *ngIf="editing?.id === s.id">
-                <div class="field">
-                  <span class="field-label">Costo unit.</span>
-                  <input
-                    type="number"
-                    step="0.01"
-                    [(ngModel)]="editCost"
-                    (ngModelChange)="recalcEditTotal()"
-                  />
-                </div>
-                <div class="field">
-                  <span class="field-label">Obs.</span>
-                  <input type="text" [(ngModel)]="editObs" />
-                </div>
-                <button type="button" class="btn btn-primary" (click)="saveEdit()" [disabled]="saving">
-                  Guardar
-                </button>
-                <button type="button" class="btn btn-ghost" (click)="cancelEdit()">Cancelar</button>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
   </ng-container>
 </div>

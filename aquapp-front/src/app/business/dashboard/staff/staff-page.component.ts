@@ -1,26 +1,34 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
+import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import { StaffUser } from '../../../core/models/api.models';
+import { DeliveryRoute, StaffUser } from '../../../core/models/api.models';
 import {
   StaffApiService,
   StaffRole,
 } from '../../../core/services/staff-api.service';
+import { DashboardBranchContextService } from '../../../core/services/dashboard-branch-context.service';
+import { DeliveryRoutesApiService } from '../../../core/services/delivery-routes-api.service';
 import { apiErrorMessage } from '../../../core/utils/api-error';
+import { AppModalComponent } from '../../../shared/ui/app-modal.component';
 import { BranchSelectComponent } from '../shared/branch-select.component';
 
 @Component({
   selector: 'app-staff-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, BranchSelectComponent],
+  imports: [CommonModule, FormsModule, BranchSelectComponent, AppModalComponent],
   templateUrl: './staff-page.component.html',
   styleUrls: ['../styles/crud-page.css', './staff-page.component.scoped.css'],
 })
 export class StaffPageComponent implements OnInit {
   private readonly api = inject(StaffApiService);
+  private readonly routesApi = inject(DeliveryRoutesApiService);
+  private readonly branchCtx = inject(DashboardBranchContextService);
 
   filterBranchId: number | null = null;
+  addModalOpen = false;
   staff: StaffUser[] = [];
+  routes: DeliveryRoute[] = [];
 
   formBranchId: number | null = null;
   form = {
@@ -31,12 +39,14 @@ export class StaffPageComponent implements OnInit {
     maternal_name: '',
     birthday: '',
     role: 'assistant' as StaffRole,
+    delivery_route_ids: [] as number[],
   };
 
   editing: StaffUser | null = null;
   editName = '';
   editEmail = '';
   editPassword = '';
+  editDeliveryRouteIds: number[] = [];
 
   saving = false;
   error = '';
@@ -48,13 +58,25 @@ export class StaffPageComponent implements OnInit {
     delivery: 'Reparto',
   };
 
-  ngOnInit(): void {
-    this.reload();
+  private readonly extraRoleLabels: Record<string, string> = {
+    owner: 'Propietario',
+    admin: 'Admin',
+  };
+
+  constructor() {
+    toObservable(this.branchCtx.branchId)
+      .pipe(takeUntilDestroyed())
+      .subscribe((id) => {
+        this.filterBranchId = id;
+        this.reload();
+      });
   }
 
-  onFilterChange(id: number | null): void {
-    this.filterBranchId = id;
-    this.reload();
+  ngOnInit(): void {
+    this.routesApi.list().subscribe({
+      next: (r) => (this.routes = r),
+      error: (e) => (this.error = apiErrorMessage(e)),
+    });
   }
 
   onFormBranchChange(id: number | null): void {
@@ -72,7 +94,45 @@ export class StaffPageComponent implements OnInit {
 
   roleNames(u: StaffUser): string {
     if (!u.roles?.length) return '—';
-    return u.roles.map((r) => this.roleLabels[r.name as StaffRole] ?? r.name).join(', ');
+    return u.roles
+      .map(
+        (r) =>
+          this.roleLabels[r.name as StaffRole] ??
+          this.extraRoleLabels[r.name] ??
+          r.name,
+      )
+      .join(', ');
+  }
+
+  /** Nombre + primer apellido para listado (ej. Margarito Romero). */
+  staffFullName(u: StaffUser): string {
+    return [u.name?.trim(), u.paternal_name?.trim()].filter(Boolean).join(' ');
+  }
+
+  routesLabel(u: StaffUser): string {
+    const names = u.delivery_routes?.map((x) => x.name?.trim()).filter(Boolean);
+    return names?.length ? names.join(' · ') : '—';
+  }
+
+  isStaffRouteSelected(id: number, which: 'form' | 'edit'): boolean {
+    const ids = which === 'form' ? this.form.delivery_route_ids : this.editDeliveryRouteIds;
+    return ids.includes(id);
+  }
+
+  toggleStaffRoute(id: number, which: 'form' | 'edit'): void {
+    if (which === 'form') {
+      this.form.delivery_route_ids = this.toggleIdInList(this.form.delivery_route_ids, id);
+    } else {
+      this.editDeliveryRouteIds = this.toggleIdInList(this.editDeliveryRouteIds, id);
+    }
+  }
+
+  private toggleIdInList(list: number[], id: number): number[] {
+    const i = list.indexOf(id);
+    if (i >= 0) {
+      return list.filter((x) => x !== id);
+    }
+    return [...list, id];
   }
 
   register(): void {
@@ -92,6 +152,8 @@ export class StaffPageComponent implements OnInit {
         birthday: this.form.birthday,
         role: this.form.role,
         branch_id: this.formBranchId,
+        delivery_route_ids:
+          this.form.delivery_route_ids.length > 0 ? this.form.delivery_route_ids : undefined,
       })
       .subscribe({
         next: () => {
@@ -103,8 +165,10 @@ export class StaffPageComponent implements OnInit {
             maternal_name: '',
             birthday: '',
             role: 'assistant',
+            delivery_route_ids: [],
           };
           this.formBranchId = null;
+          this.addModalOpen = false;
           this.saving = false;
           this.reload('Personal registrado.');
         },
@@ -120,6 +184,7 @@ export class StaffPageComponent implements OnInit {
     this.editName = u.name;
     this.editEmail = u.email;
     this.editPassword = '';
+    this.editDeliveryRouteIds = u.delivery_routes?.map((r) => r.id) ?? [];
   }
 
   cancelEdit(): void {
@@ -129,9 +194,15 @@ export class StaffPageComponent implements OnInit {
   saveEdit(): void {
     if (!this.editing) return;
     this.saving = true;
-    const body: { name?: string; email?: string; password?: string } = {
+    const body: {
+      name?: string;
+      email?: string;
+      password?: string;
+      delivery_route_ids?: number[];
+    } = {
       name: this.editName.trim(),
       email: this.editEmail.trim(),
+      delivery_route_ids: this.editDeliveryRouteIds,
     };
     if (this.editPassword.length >= 8) {
       body.password = this.editPassword;
@@ -150,7 +221,7 @@ export class StaffPageComponent implements OnInit {
   }
 
   remove(u: StaffUser): void {
-    if (!confirm(`¿Eliminar a «${u.name}»?`)) return;
+    if (!confirm(`¿Eliminar a «${this.staffFullName(u)}»?`)) return;
     this.api.delete(u.id).subscribe({
       next: () => this.reload('Usuario eliminado.'),
       error: (e) => (this.error = apiErrorMessage(e)),

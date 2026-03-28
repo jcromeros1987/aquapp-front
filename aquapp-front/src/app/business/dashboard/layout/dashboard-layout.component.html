@@ -8,6 +8,38 @@
       </div>
     </div>
 
+    <div class="sidebar-branch" aria-label="Selección de sucursal">
+      @if (branchCtx.loadError()) {
+        <p class="sidebar-branch-err">{{ branchCtx.loadError() }}</p>
+      } @else if (!branchCtx.ready()) {
+        <span class="sidebar-branch-loading">Cargando sucursales…</span>
+      } @else if (branchCtx.branches().length > 0) {
+        <label class="sidebar-branch-label" for="sidebar-branch-select">Sucursal activa</label>
+        <select
+          id="sidebar-branch-select"
+          class="sidebar-branch-select"
+          [ngModel]="branchCtx.branchId()"
+          (ngModelChange)="branchCtx.setBranchId($event)"
+        >
+          <option [ngValue]="null">Todas las sucursales</option>
+          @for (b of branchCtx.branches(); track b.id) {
+            <option [ngValue]="b.id">{{ b.name }}</option>
+          }
+        </select>
+        @if (branchCtx.branchId() === null) {
+          <p class="sidebar-branch-hint">
+            Varias pantallas requieren una sucursal concreta; elige una aquí para ver productos, inventario y ventas.
+          </p>
+        }
+      } @else {
+        <p class="sidebar-branch-empty">
+          Tu usuario no tiene <strong>sucursales asignadas</strong>. Crea una en Purificadoras o ejecuta
+          <code>php artisan db:seed</code> en Laravel.
+        </p>
+        <a routerLink="/dashboard/purificadoras" class="sidebar-branch-link">Ir a Purificadoras</a>
+      }
+    </div>
+
     <nav class="sidebar-nav">
       <app-sidebar-menu [nodes]="menu.tree()" [depth]="0" />
     </nav>

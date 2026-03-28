@@ -20,9 +20,12 @@ export class BranchApiService {
       .pipe(map((r) => r.branch));
   }
 
-  update(id: number, name: string): Observable<Branch> {
+  update(
+    id: number,
+    body: { name: string; latitude?: number | null; longitude?: number | null },
+  ): Observable<Branch> {
     return this.http
-      .put<{ branch: Branch }>(ApiEndpoints.branch.update(id), { name })
+      .put<{ branch: Branch }>(ApiEndpoints.branch.update(id), body)
       .pipe(map((r) => r.branch));
   }
 

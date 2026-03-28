@@ -1,0 +1,70 @@
+<div class="page-card wide">
+  <app-sales-venta-subnav />
+
+  <h1>Venta en sucursal</h1>
+  <p class="subtitle">
+    Cuenta garrafones vendidos <strong>en mostrador</strong> con un solo toque. Cada registro guarda la
+    <strong>hora</strong> en que se registró en el sistema. El producto y precio se toman del artículo
+    de venta preferido de la sucursal (garrafón / agua).
+  </p>
+
+  <p class="alert alert-error" *ngIf="error">{{ error }}</p>
+  <p class="alert alert-ok" *ngIf="okMsg">{{ okMsg }}</p>
+
+  <p class="branch-context-hint" *ngIf="branchId == null">
+    Elige una <strong>sucursal concreta</strong> en el menú lateral para registrar ventas en sucursal.
+  </p>
+
+  <ng-container *ngIf="branchId != null">
+    <div class="sucursal-counter-card" *ngIf="pickedProduct as pr; else sinProducto">
+      <div class="sucursal-counter-visual">
+        <app-garrafon-jug class="jug-xl" />
+        <div class="qty-controls">
+          <button type="button" class="btn btn-ghost qty-btn" (click)="decQty()" [disabled]="qty <= 1 || saving">
+            −
+          </button>
+          <span class="qty-value">{{ qty }}</span>
+          <button type="button" class="btn btn-ghost qty-btn" (click)="incQty()" [disabled]="qty >= 999 || saving">
+            +
+          </button>
+        </div>
+        <p class="product-hint">{{ pr.name }} · {{ unitPrice() | number: '1.2-2' }} c/u</p>
+        <p class="total-line">Total: <strong>{{ lineTotal() | number: '1.2-2' }}</strong></p>
+        <button type="button" class="btn btn-primary register-btn" [disabled]="saving" (click)="register()">
+          {{ saving ? 'Registrando…' : 'Registrar venta' }}
+        </button>
+      </div>
+    </div>
+
+    <ng-template #sinProducto>
+      <p class="alert alert-error">
+        No hay productos de venta en esta sucursal. Crea uno en <strong>Productos</strong>.
+      </p>
+    </ng-template>
+
+    <h2 class="section-title">Ventas en sucursal hoy ({{ todayStr }})</h2>
+    <div class="data-table-wrap" *ngIf="salesTodaySucursal.length; else vacioHoy">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Hora</th>
+            <th>Cant.</th>
+            <th>Total</th>
+            <th>Producto</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let s of salesTodaySucursal; trackBy: trackSale">
+            <td>{{ formatSaleTime(s) }}</td>
+            <td>{{ s.quantity }}</td>
+            <td>{{ s.total_amount | number: '1.2-2' }}</td>
+            <td>{{ s.product?.name ?? ('#' + s.product_id) }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <ng-template #vacioHoy>
+      <p class="hint-muted">Aún no hay ventas en sucursal registradas hoy.</p>
+    </ng-template>
+  </ng-container>
+</div>

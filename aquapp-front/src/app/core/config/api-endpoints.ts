@@ -25,6 +25,8 @@ export const ApiEndpoints = {
       `${base}/branch/${branchId}/products/${productId}`,
     inventoryUnitsAvailable: (branchId: number) =>
       `${base}/branch/${branchId}/inventory-units/available`,
+    inventoryUnitsByCatalog: (branchId: number, catProductId: number) =>
+      `${base}/branch/${branchId}/inventory-units/by-catalog/${catProductId}`,
     deliveryQuickAssign: (branchId: number) =>
       `${base}/branch/${branchId}/delivery/quick-assign`,
     deliveryToday: (branchId: number) => `${base}/branch/${branchId}/delivery/today`,
@@ -47,6 +49,24 @@ export const ApiEndpoints = {
     register: `${base}/staff/register`,
     one: (id: number) => `${base}/staff/${id}`,
   },
+  payrollExpenses: {
+    list: `${base}/payroll-expenses`,
+    one: (id: number) => `${base}/payroll-expenses/${id}`,
+  },
+  insumoExpenses: {
+    list: `${base}/insumo-expenses`,
+    one: (id: number) => `${base}/insumo-expenses/${id}`,
+  },
+  serviceExpenseTypes: {
+    list: `${base}/service-expense-types`,
+  },
+  serviceExpenses: {
+    list: `${base}/service-expenses`,
+    one: (id: number) => `${base}/service-expenses/${id}`,
+  },
+  financial: {
+    balance: `${base}/financial/balance`,
+  },
   sales: {
     list: `${base}/sale`,
     dailySummary: `${base}/sale/daily-summary`,
@@ -60,13 +80,16 @@ export const ApiEndpoints = {
   },
   customer: {
     list: `${base}/customer`,
+    mapStats: `${base}/customer/map-stats`,
     register: `${base}/customer/register`,
     one: (id: number) => `${base}/customer/${id}`,
   },
   deliveryRoutes: {
     list: `${base}/cat-delivery-routes`,
+    listWithCustomers: `${base}/cat-delivery-routes/with-customers`,
     register: `${base}/cat-delivery-routes/register`,
     one: (id: number) => `${base}/cat-delivery-routes/${id}`,
+    customerOrder: (id: number) => `${base}/cat-delivery-routes/${id}/customer-order`,
   },
   cat: {
     countries: `${base}/cat-countries`,

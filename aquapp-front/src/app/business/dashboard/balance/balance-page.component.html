@@ -1,0 +1,97 @@
+<div class="page-card wide">
+  <h1>Balance</h1>
+  <p class="subtitle">
+    <strong>Ingresos</strong> (ventas registradas) menos <strong>gastos</strong>: mercancía vendida,
+    <a routerLink="/dashboard/gastos/sueldos">sueldos</a> e
+    <a routerLink="/dashboard/gastos/insumos">insumos</a>,
+    <a routerLink="/dashboard/gastos/servicios">servicios</a>. Semana, mes o año calendario; zona horaria
+    México. Si el selector lateral está en <strong>todas las sucursales</strong>, se suman todas las tuyas.
+  </p>
+
+  <nav class="period-tabs" aria-label="Periodo">
+    @for (p of periods; track p.id) {
+      <button
+        type="button"
+        class="period-tab"
+        [class.active]="period() === p.id"
+        (click)="setPeriod(p.id)"
+      >
+        {{ p.label }}
+      </button>
+    }
+  </nav>
+
+  @if (branchCtx.branchId() === null) {
+    <p class="branch-context-hint">
+      Mostrando total de <strong>todas tus sucursales</strong>. Elige una sucursal en el menú lateral para filtrar.
+    </p>
+  }
+
+  @if (loading()) {
+    <p class="state state--load">Cargando…</p>
+  }
+  @if (error()) {
+    <p class="alert alert-error">{{ error() }}</p>
+  }
+
+  @if (data(); as d) {
+    <div class="balance-meta">
+      <span class="balance-label">{{ d.label }}</span>
+      @if (d.range_start && d.range_end) {
+        <span class="balance-range">{{ d.range_start }} · {{ d.range_end }}</span>
+      }
+    </div>
+
+    <div class="balance-cards">
+      <div class="balance-card balance-card--income">
+        <span class="bc-label">Ingresos</span>
+        <strong class="bc-value">{{ d.income | number: '1.2-2' }}</strong>
+      </div>
+      <div class="balance-card balance-card--exp">
+        <span class="bc-label">Gastos (mercancía)</span>
+        <strong class="bc-value">{{ d.expenses_merchandise | number: '1.2-2' }}</strong>
+      </div>
+      <div class="balance-card balance-card--exp">
+        <span class="bc-label">Gastos (sueldos)</span>
+        <strong class="bc-value">{{ d.expenses_payroll | number: '1.2-2' }}</strong>
+      </div>
+      <div class="balance-card balance-card--exp">
+        <span class="bc-label">Gastos (insumos)</span>
+        <strong class="bc-value">{{ d.expenses_insumos | number: '1.2-2' }}</strong>
+      </div>
+      <div class="balance-card balance-card--exp">
+        <span class="bc-label">Gastos (servicios)</span>
+        <strong class="bc-value">{{ d.expenses_services | number: '1.2-2' }}</strong>
+      </div>
+      <div class="balance-card balance-card--exp-total">
+        <span class="bc-label">Total gastos</span>
+        <strong class="bc-value">{{ d.expenses_total | number: '1.2-2' }}</strong>
+      </div>
+    </div>
+
+    <div
+      class="balance-result"
+      [class.balance-result--pos]="d.balance >= 0"
+      [class.balance-result--neg]="d.balance < 0"
+    >
+      <span class="br-label">Te queda (resultado del periodo)</span>
+      <strong class="br-value">{{ d.balance | number: '1.2-2' }}</strong>
+    </div>
+
+    @if (d.income > 0) {
+      <div class="balance-bar-wrap">
+        <div class="balance-bar-track">
+          <div
+            class="balance-bar-exp"
+            [style.width.%]="expenseShareOfIncome()"
+            [attr.title]="'Gastos: ' + expenseShareOfIncome() + '% del ingreso'"
+          ></div>
+        </div>
+        <p class="balance-bar-hint">
+          Los gastos representan aprox. <strong>{{ expenseShareOfIncome() }}%</strong> de tus ingresos en este
+          periodo.
+        </p>
+      </div>
+    }
+  }
+</div>

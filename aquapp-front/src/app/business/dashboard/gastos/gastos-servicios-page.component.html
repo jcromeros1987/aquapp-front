@@ -1,0 +1,121 @@
+<div class="page-card wide">
+  <p class="breadcrumb">
+    <a routerLink="/dashboard/inicio">Inicio</a>
+    <span class="sep">·</span>
+    <span>Gastos</span>
+    <span class="sep">·</span>
+    <span>Servicios</span>
+  </p>
+
+  <h1>Gastos de servicios</h1>
+  <p class="subtitle">
+    Registra el <strong>costo</strong> de cada tipo de <strong>mantenimiento o servicio</strong> y el <strong>día</strong>
+    en que cuenta el gasto (aparece en la gráfica de gastos del inicio y en el balance). Los tipos se cargan desde el
+    catálogo del sistema.
+  </p>
+
+  <p class="alert alert-error" *ngIf="error">{{ error }}</p>
+  <p class="alert alert-ok" *ngIf="okMsg">{{ okMsg }}</p>
+
+  <p class="branch-context-hint" *ngIf="branchId == null">
+    Elige una <strong>sucursal</strong> en el menú lateral para registrar pagos.
+  </p>
+
+  <ng-container *ngIf="branchId != null">
+    <div class="form-panel">
+      <h2 class="section-title">Registrar pago</h2>
+      <div class="form-grid" *ngIf="types.length; else sinTipos">
+        <div class="field">
+          <span class="field-label">Tipo de servicio / mantenimiento</span>
+          <select [(ngModel)]="formTypeId">
+            <option [ngValue]="null">— Elija —</option>
+            <option *ngFor="let t of types" [ngValue]="t.id">{{ typeLabel(t) }}</option>
+          </select>
+        </div>
+        <div class="field">
+          <span class="field-label">Costo</span>
+          <input type="number" min="0.01" step="0.01" [(ngModel)]="formAmount" placeholder="0.00" />
+        </div>
+        <div class="field">
+          <span class="field-label">Fecha del pago (en gráfica)</span>
+          <input type="date" [(ngModel)]="formPayDate" />
+        </div>
+        <div class="field full">
+          <span class="field-label">Notas (opcional)</span>
+          <input type="text" [(ngModel)]="formNotes" placeholder="Factura, técnico, referencia…" />
+        </div>
+        <div class="field full actions">
+          <button type="button" class="btn btn-primary" [disabled]="saving" (click)="create()">
+            {{ saving ? 'Guardando…' : 'Guardar pago' }}
+          </button>
+        </div>
+      </div>
+      <ng-template #sinTipos>
+        <p class="hint-muted">
+          No hay tipos de servicio en el catálogo. Ejecuta en el servidor
+          <code>php artisan db:seed --class=ServiceExpenseTypesSeeder</code>
+          o <code>php artisan migrate --seed</code> (desde cero).
+        </p>
+      </ng-template>
+    </div>
+
+    <h2 class="section-title">Historial (esta sucursal)</h2>
+    <div class="data-table-wrap" *ngIf="rows.length; else vacio">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Tipo</th>
+            <th>Monto</th>
+            <th>Notas</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let r of rows; trackBy: trackRow">
+            <td>{{ r.pay_date | slice: 0:10 }}</td>
+            <td>{{ typeLabelFromRow(r) }}</td>
+            <td>{{ r.amount | number: '1.2-2' }}</td>
+            <td class="cell-notes">{{ r.notes || '—' }}</td>
+            <td class="actions">
+              <button type="button" class="btn btn-ghost" (click)="startEdit(r)">Editar</button>
+              <button type="button" class="btn btn-danger" (click)="remove(r)">Eliminar</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <ng-template #vacio>
+      <p class="hint-muted">Aún no hay pagos registrados.</p>
+    </ng-template>
+  </ng-container>
+</div>
+
+<app-modal [(open)]="editModalOpen" title="Editar pago" size="md">
+  <ng-container *ngIf="editing">
+    <div class="form-grid" *ngIf="types.length">
+      <div class="field full">
+        <span class="field-label">Tipo</span>
+        <select [(ngModel)]="editTypeId">
+          <option *ngFor="let t of types" [ngValue]="t.id">{{ typeLabel(t) }}</option>
+        </select>
+      </div>
+      <div class="field">
+        <span class="field-label">Monto</span>
+        <input type="number" min="0.01" step="0.01" [(ngModel)]="editAmount" />
+      </div>
+      <div class="field">
+        <span class="field-label">Fecha del pago</span>
+        <input type="date" [(ngModel)]="editPayDate" />
+      </div>
+      <div class="field full">
+        <span class="field-label">Notas</span>
+        <input type="text" [(ngModel)]="editNotes" />
+      </div>
+      <div class="field full actions">
+        <button type="button" class="btn btn-primary" [disabled]="saving" (click)="saveEdit()">Guardar</button>
+        <button type="button" class="btn btn-ghost" (click)="cancelEdit()">Cancelar</button>
+      </div>
+    </div>
+  </ng-container>
+</app-modal>

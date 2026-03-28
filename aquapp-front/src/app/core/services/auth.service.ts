@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { Observable, tap } from 'rxjs';
 import { ApiEndpoints } from '../config/api-endpoints';
 import { AUTH_TOKEN_KEY, AUTH_USER_KEY } from '../constants/auth.storage';
+import { DashboardBranchContextService } from './dashboard-branch-context.service';
 
 export interface LoginResponse {
   success: boolean;
@@ -19,6 +20,7 @@ export class AuthService {
   constructor(
     private httpClient: HttpClient,
     private router: Router,
+    private branchCtx: DashboardBranchContextService,
   ) {}
 
   login(email: string, password: string): Observable<LoginResponse> {
@@ -86,6 +88,7 @@ export class AuthService {
   private clearLocalSession(): void {
     localStorage.removeItem(AUTH_TOKEN_KEY);
     localStorage.removeItem(AUTH_USER_KEY);
+    this.branchCtx.resetAfterLogout();
     void this.router.navigate(['/login']);
   }
 }

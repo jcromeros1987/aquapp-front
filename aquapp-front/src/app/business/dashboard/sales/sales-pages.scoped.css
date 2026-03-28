@@ -1,0 +1,285 @@
+.page-card.wide {
+  max-width: 72rem;
+}
+
+.section-title {
+  margin: 1.25rem 0 0.65rem;
+  font-size: 1rem;
+  color: #374151;
+}
+
+.toolbar.wrap {
+  align-items: flex-end;
+}
+
+.field.grow {
+  flex: 1 1 12rem;
+  min-width: 10rem;
+}
+
+.actions.stack {
+  flex-direction: column;
+  align-items: stretch;
+  min-width: 10rem;
+}
+
+.sales-summary {
+  margin-bottom: 1rem;
+  padding: 1rem 1.1rem;
+  background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+  border: 1px solid #c7d2fe;
+  border-radius: 10px;
+}
+
+.sales-summary-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.sales-summary-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #3730a3;
+}
+
+.sales-summary-amount {
+  font-size: 1.5rem;
+  font-variant-numeric: tabular-nums;
+  color: #1e1b4b;
+}
+
+.sales-summary-meta {
+  margin: 0.5rem 0 0;
+  font-size: 0.8rem;
+  color: #6366f1;
+}
+
+.delivery-quick-card {
+  margin: 0 0 1.25rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid #86efac;
+  border-radius: 10px;
+  background: #f0fdf4;
+}
+
+.delivery-lead {
+  margin: 0 0 0.75rem;
+  font-size: 0.9rem;
+  color: #166534;
+}
+
+.units-check-wrap {
+  margin: 0.75rem 0;
+  width: 100%;
+}
+
+.units-check-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.35rem;
+  max-height: 14rem;
+  overflow-y: auto;
+  padding: 0.35rem 0;
+}
+
+.units-check-grid--garrafon {
+  gap: 0.7rem 0.85rem;
+  max-height: 18rem;
+  padding: 0.5rem 0.15rem;
+}
+
+/* Tile garrafón: silueta SVG + etiqueta centrada en el cuerpo */
+.garrafon-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 5rem;
+  padding: 0;
+  margin: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.garrafon-tile:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 3px;
+  border-radius: 12px;
+}
+
+.garrafon-tile__figure {
+  position: relative;
+  display: block;
+  width: 100%;
+  min-height: 5.5rem;
+}
+
+.garrafon-tile__label {
+  position: absolute;
+  left: 50%;
+  top: 54%;
+  transform: translate(-50%, -50%);
+  max-width: 3rem;
+  font-size: 0.68rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+  letter-spacing: 0.03em;
+  line-height: 1.05;
+  text-align: center;
+  word-break: break-all;
+  pointer-events: none;
+}
+
+.garrafon-tile__add {
+  margin-top: 0.25rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #166534;
+  width: 1.28rem;
+  height: 1.28rem;
+  line-height: 1.26rem;
+  text-align: center;
+  background: #dcfce7;
+  border-radius: 999px;
+  border: 1px solid #86efac;
+  box-shadow: 0 1px 2px rgba(22, 101, 52, 0.12);
+}
+
+.garrafon-tile:hover:not(:disabled) .garrafon-tile__figure {
+  filter: brightness(1.06);
+  transition: filter 0.12s ease;
+}
+
+.garrafon-tile:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  filter: grayscale(0.2);
+}
+
+.units-basket-grid--garrafon {
+  gap: 0.65rem 0.75rem;
+}
+
+.garrafon-tile-wrap--basket {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.garrafon-tile-wrap--basket .garrafon-tile {
+  pointer-events: none;
+}
+
+.garrafon-tile__remove {
+  flex-shrink: 0;
+  min-width: 1.5rem;
+  height: 1.5rem;
+  padding: 0 0.35rem;
+  border: none;
+  border-radius: 8px;
+  background: #e0e7ff;
+  color: #4338ca;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.garrafon-tile__remove:hover:not(:disabled) {
+  background: #c7d2fe;
+}
+
+.garrafon-tile__remove:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.units-with-client-panel {
+  margin: 0 0 1rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid #a5b4fc;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+}
+
+.units-panel-label {
+  display: block;
+  margin-bottom: 0.2rem;
+  color: #312e81;
+}
+
+.units-panel-hint {
+  margin: 0 0 0.5rem;
+}
+
+.units-basket-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  max-height: 12rem;
+  overflow-y: auto;
+  padding: 0.2rem 0;
+}
+
+.garrafon-inner {
+  width: 100%;
+}
+
+.delivery-save-btn {
+  margin-top: 0.5rem;
+}
+
+.field-hint {
+  margin: 0.35rem 0 0;
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.quick-customer-panel {
+  width: 100%;
+  padding: 0.85rem 1rem;
+  margin-top: 0.25rem;
+  border: 1px dashed #93c5fd;
+  border-radius: 8px;
+  background: #eff6ff;
+}
+
+.quick-customer-title {
+  margin: 0 0 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #1e40af;
+}
+
+.sub-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0 0 1rem;
+}
+
+.sub-nav a {
+  padding: 0.45rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  text-decoration: none;
+  color: #4338ca;
+  border: 1px solid #c7d2fe;
+  background: #fff;
+}
+
+.sub-nav a.active {
+  background: #4f46e5;
+  color: #fff;
+  border-color: #4f46e5;
+}

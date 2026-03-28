@@ -1,0 +1,134 @@
+<div class="page-card wide">
+  <p class="breadcrumb">
+    <a routerLink="/dashboard/inicio">Inicio</a>
+    <span class="sep">·</span>
+    <span>Gastos</span>
+  </p>
+
+  <h1>Sueldos de repartidores</h1>
+  <p class="subtitle">
+    Registra cuánto pagas, <strong>en qué fecha</strong> contabiliza el pago (aparece en la barra verde «Gastos» del
+    inicio junto al costo de mercancía vendida) y opcionalmente el <strong>día habitual</strong> de pago (viernes,
+    quincenal…). Solo aparecen empleados con rol <strong>repartidor</strong> de la sucursal.
+  </p>
+
+  <p class="alert alert-error" *ngIf="error">{{ error }}</p>
+  <p class="alert alert-ok" *ngIf="okMsg">{{ okMsg }}</p>
+
+  <p class="branch-context-hint" *ngIf="branchId == null">
+    Elige una <strong>sucursal</strong> en el menú lateral para gestionar pagos.
+  </p>
+
+  <ng-container *ngIf="branchId != null">
+    <div class="form-panel">
+      <h2 class="section-title">Registrar pago</h2>
+      <div class="form-grid" *ngIf="repartidores.length; else sinReparto">
+        <div class="field">
+          <span class="field-label">Repartidor</span>
+          <select [(ngModel)]="formUserId">
+            <option [ngValue]="null">— Elija —</option>
+            <option *ngFor="let u of repartidores" [ngValue]="u.id">{{ staffLabel(u) }}</option>
+          </select>
+        </div>
+        <div class="field">
+          <span class="field-label">Monto pagado</span>
+          <input type="number" min="0.01" step="0.01" [(ngModel)]="formAmount" placeholder="0.00" />
+        </div>
+        <div class="field">
+          <span class="field-label">Fecha del pago (en gráfica)</span>
+          <input type="date" [(ngModel)]="formPayDate" />
+        </div>
+        <div class="field">
+          <span class="field-label">Día habitual de pago (opcional)</span>
+          <select [(ngModel)]="formSchedule">
+            <option *ngFor="let s of schedulePresets" [value]="s">{{ s || '— Ninguno / personalizado abajo —' }}</option>
+          </select>
+        </div>
+        <div class="field full">
+          <span class="field-label">Notas</span>
+          <input type="text" [(ngModel)]="formNotes" placeholder="Referencia, concepto…" />
+        </div>
+        <div class="field full actions">
+          <button type="button" class="btn btn-primary" [disabled]="saving" (click)="create()">
+            {{ saving ? 'Guardando…' : 'Guardar pago' }}
+          </button>
+        </div>
+      </div>
+      <ng-template #sinReparto>
+        <p class="hint-muted" *ngIf="staff.length === 0">
+          No hay personal listado para esta sucursal en
+          <a routerLink="/dashboard/personal">Personal</a> (solo cuentan roles gestor, asistente o
+          <strong>repartidor</strong>). Si eliges otra sucursal en el menú lateral, puede haber personal allí.
+        </p>
+        <p class="hint-muted" *ngIf="staff.length > 0">
+          Hay {{ staff.length }} persona(s) en esta sucursal, pero <strong>ninguna con rol repartidor</strong>
+          (<code>delivery</code>). Esta pantalla solo permite pagos a repartidores. Asigna el rol en
+          <a routerLink="/dashboard/personal">Personal</a> o ejecuta en el API
+          <code>php artisan db:seed --class=StaffSeeder</code> (asigna reparto a quien definas en el seeder).
+        </p>
+      </ng-template>
+    </div>
+
+    <h2 class="section-title">Historial de pagos (esta sucursal)</h2>
+    <div class="data-table-wrap" *ngIf="rows.length; else vacio">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Fecha pago</th>
+            <th>Repartidor</th>
+            <th>Monto</th>
+            <th>Día habitual</th>
+            <th>Notas</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let r of rows; trackBy: trackRow">
+            <td>{{ r.pay_date | slice: 0:10 }}</td>
+            <td>{{ staffLabelFromRow(r) }}</td>
+            <td>{{ r.amount | number: '1.2-2' }}</td>
+            <td>{{ r.pay_schedule_note || '—' }}</td>
+            <td class="cell-notes">{{ r.notes || '—' }}</td>
+            <td class="actions">
+              <button type="button" class="btn btn-ghost" (click)="startEdit(r)">Editar</button>
+              <button type="button" class="btn btn-danger" (click)="remove(r)">Eliminar</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <ng-template #vacio>
+      <p class="hint-muted">Aún no hay pagos registrados.</p>
+    </ng-template>
+  </ng-container>
+</div>
+
+<app-modal [(open)]="editModalOpen" title="Editar pago" size="md">
+  <ng-container *ngIf="editing">
+    <div class="form-grid" *ngIf="repartidores.length">
+      <p class="edit-hint">Repartidor: <strong>{{ editing.user?.name || ('#' + editing.user_id) }}</strong></p>
+      <div class="field">
+        <span class="field-label">Monto</span>
+        <input type="number" min="0.01" step="0.01" [(ngModel)]="editAmount" />
+      </div>
+      <div class="field">
+        <span class="field-label">Fecha del pago</span>
+        <input type="date" [(ngModel)]="editPayDate" />
+      </div>
+      <div class="field full">
+        <span class="field-label">Día habitual</span>
+        <select [(ngModel)]="editSchedule">
+          <option *ngFor="let s of schedulePresets" [value]="s">{{ s || '— Ninguno —' }}</option>
+        </select>
+      </div>
+      <div class="field full">
+        <span class="field-label">Notas</span>
+        <input type="text" [(ngModel)]="editNotes" />
+      </div>
+      <div class="field full actions">
+        <button type="button" class="btn btn-primary" [disabled]="saving" (click)="saveEdit()">Guardar</button>
+        <button type="button" class="btn btn-ghost" (click)="cancelEdit()">Cancelar</button>
+      </div>
+    </div>
+  </ng-container>
+</app-modal>

@@ -8,7 +8,39 @@
   border-left: 1px solid rgba(255, 255, 255, 0.12);
 }
 
-.nav-parent,
+.nav-parent-row {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  gap: 0.15rem;
+}
+
+.nav-parent-link,
+.nav-parent-static {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+  padding: 0.55rem 0.75rem;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 0.9rem;
+  text-decoration: none;
+  box-sizing: border-box;
+}
+
+.nav-parent-link {
+  cursor: pointer;
+}
+
+.nav-parent-static {
+  cursor: default;
+}
+
 .nav-link,
 .nav-muted {
   display: flex;
@@ -27,11 +59,31 @@
   box-sizing: border-box;
 }
 
-.nav-parent:hover,
+.nav-parent-toggle {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  padding: 0.35rem;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.nav-parent-toggle:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.nav-parent-link:hover,
 .nav-link:hover {
   background: rgba(255, 255, 255, 0.08);
 }
 
+.nav-parent-link.active,
 .nav-link.active {
   background: rgba(139, 92, 246, 0.35);
   color: #fff;

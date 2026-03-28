@@ -5,36 +5,35 @@
   <p class="alert alert-error" *ngIf="error">{{ error }}</p>
   <p class="alert alert-ok" *ngIf="okMsg">{{ okMsg }}</p>
 
-  <div class="toolbar">
-    <app-branch-select
-      [branchId]="branchId"
-      (branchIdChange)="onBranchChange($event)"
-      label="Sucursal"
-    />
-  </div>
+  <p class="branch-context-hint" *ngIf="branchId == null">
+    Elige una <strong>sucursal concreta</strong> en el menú lateral (debajo del logo) para ver y editar productos.
+  </p>
 
   <ng-container *ngIf="branchId != null">
-    <h2 class="section-title">Nuevo producto</h2>
     <div class="toolbar">
-      <div class="field">
-        <span class="field-label">Nombre</span>
-        <input type="text" [(ngModel)]="formName" placeholder="Nombre" />
-      </div>
-      <div class="field">
-        <span class="field-label">Costo</span>
-        <input type="number" step="0.01" min="0" [(ngModel)]="formCost" />
-      </div>
-      <div class="field">
-        <span class="field-label">Tipo (catálogo)</span>
-        <select [(ngModel)]="formCatId">
-          <option [ngValue]="null">—</option>
-          <option *ngFor="let c of catalog" [ngValue]="c.id">{{ c.name }}</option>
-        </select>
-      </div>
-      <button type="button" class="btn btn-primary" (click)="create()" [disabled]="saving">
-        Agregar
-      </button>
+      <button type="button" class="btn btn-primary" (click)="addModalOpen = true">Nuevo producto</button>
     </div>
+
+    <app-modal [(open)]="addModalOpen" title="Nuevo producto" size="lg">
+      <div class="toolbar wrap">
+        <div class="field">
+          <span class="field-label">Nombre</span>
+          <input type="text" [(ngModel)]="formName" placeholder="Nombre" />
+        </div>
+        <div class="field">
+          <span class="field-label">Costo</span>
+          <input type="number" step="0.01" min="0" [(ngModel)]="formCost" />
+        </div>
+        <div class="field">
+          <span class="field-label">Tipo (catálogo)</span>
+          <select [(ngModel)]="formCatId">
+            <option [ngValue]="null">—</option>
+            <option *ngFor="let c of catalog" [ngValue]="c.id">{{ c.name }}</option>
+          </select>
+        </div>
+        <button type="button" class="btn btn-primary" (click)="create()" [disabled]="saving">Agregar</button>
+      </div>
+    </app-modal>
 
     <h2 class="section-title">Listado</h2>
     <div class="data-table-wrap">

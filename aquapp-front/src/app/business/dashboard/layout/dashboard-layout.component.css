@@ -43,6 +43,88 @@
   font-size: 0.75rem;
 }
 
+.sidebar-branch {
+  padding: 0.65rem 1rem 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-branch-label {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.85;
+  margin-bottom: 0.4rem;
+}
+
+.sidebar-branch-select {
+  width: 100%;
+  padding: 0.5rem 0.55rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  background: rgba(0, 0, 0, 0.22);
+  color: #f8fafc;
+  font-size: 0.84rem;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.sidebar-branch-select:focus {
+  outline: 2px solid rgba(129, 140, 248, 0.6);
+  outline-offset: 1px;
+}
+
+.sidebar-branch-select option {
+  color: #1e1b4b;
+  background: #fff;
+}
+
+.sidebar-branch-hint {
+  margin: 0.5rem 0 0;
+  font-size: 0.72rem;
+  line-height: 1.35;
+  opacity: 0.78;
+}
+
+.sidebar-branch-err {
+  margin: 0;
+  padding: 0.5rem 1rem;
+  font-size: 0.75rem;
+  color: #fecaca;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-branch-loading {
+  font-size: 0.8rem;
+  opacity: 0.85;
+}
+
+.sidebar-branch-empty {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  opacity: 0.88;
+}
+
+.sidebar-branch-empty code {
+  font-size: 0.68rem;
+  word-break: break-all;
+}
+
+.sidebar-branch-link {
+  display: inline-block;
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #c7d2fe;
+  text-decoration: underline;
+}
+
+.sidebar-branch-link:hover {
+  color: #fff;
+}
+
 .sidebar-nav {
   flex: 1;
   overflow-y: auto;

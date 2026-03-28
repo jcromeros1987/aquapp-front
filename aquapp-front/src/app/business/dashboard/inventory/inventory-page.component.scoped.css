@@ -5,6 +5,88 @@
   color: #374151;
 }
 
+.tab-lead {
+  margin: 0 0 0.5rem;
+  font-size: 0.82rem;
+  color: #6b7280;
+  line-height: 1.45;
+}
+
+.inventory-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.35rem;
+  margin: 0 0 0.75rem;
+  padding-bottom: 0;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.inventory-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0.45rem 0.75rem;
+  border: 1px solid #e5e7eb;
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
+  background: #f9fafb;
+  color: #4b5563;
+  font: inherit;
+  font-size: 0.84rem;
+  cursor: pointer;
+  line-height: 1.2;
+  transition:
+    background 0.12s ease,
+    color 0.12s ease,
+    border-color 0.12s ease;
+}
+
+.inventory-tab:hover:not(.inventory-tab--active) {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+  color: #111827;
+}
+
+.inventory-tab--active {
+  background: #fff;
+  border-color: #cbd5e1;
+  border-bottom: 1px solid #fff;
+  margin-bottom: -1px;
+  color: #0f172a;
+  font-weight: 600;
+  box-shadow: 0 -1px 0 #fff;
+}
+
+.inventory-tab-count {
+  font-size: 0.78rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: #64748b;
+  background: #e2e8f0;
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+  min-width: 1.35rem;
+  text-align: center;
+}
+
+.inventory-tab--active .inventory-tab-count {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.tab-empty-hint {
+  margin: 0 0 1rem;
+  padding: 0.9rem 1rem;
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  color: #475569;
+  line-height: 1.5;
+}
+
 .field-wide {
   min-width: 14rem;
   flex: 1;
@@ -92,4 +174,41 @@
   font-size: 0.85rem;
   color: #4b5563;
   line-height: 1.5;
+}
+
+.tab-detail-section {
+  margin: 0 0 1.25rem;
+  padding: 1rem 1.15rem 1.15rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+}
+
+.tab-detail-title {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.tab-detail-count {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: #0369a1;
+}
+
+.tab-detail-help {
+  margin-top: 0;
+}
+
+.tab-detail-empty {
+  margin-bottom: 0;
+}
+
+.tab-detail-table-wrap {
+  margin-top: 0.75rem;
+  max-height: min(70vh, 32rem);
+  overflow: auto;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
 }

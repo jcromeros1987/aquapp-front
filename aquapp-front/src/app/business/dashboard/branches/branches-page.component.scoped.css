@@ -1,1 +1,18 @@
-/* Estilos mínimos específicos de la página (si hiciera falta) */
+.cell-gps {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.input-coord {
+  width: min(100%, 9.5rem);
+  font-size: 0.9rem;
+}
+
+.link-osm {
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.muted {
+  color: #9ca3af;
+}

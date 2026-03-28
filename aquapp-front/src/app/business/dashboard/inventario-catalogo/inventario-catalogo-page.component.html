@@ -9,14 +9,18 @@
   <p class="alert alert-ok" *ngIf="okMsg">{{ okMsg }}</p>
 
   <div class="toolbar">
-    <div class="field">
-      <span class="field-label">Nuevo tipo</span>
-      <input type="text" [(ngModel)]="newName" placeholder="Ej. Motocicleta de reparto" />
-    </div>
-    <button type="button" class="btn btn-primary" (click)="create()" [disabled]="saving">
-      Crear
-    </button>
+    <button type="button" class="btn btn-primary" (click)="addModalOpen = true">Nuevo tipo</button>
   </div>
+
+  <app-modal [(open)]="addModalOpen" title="Nuevo tipo de inventario (catálogo)" size="md">
+    <div class="toolbar">
+      <div class="field">
+        <span class="field-label">Nombre</span>
+        <input type="text" [(ngModel)]="newName" placeholder="Ej. Motocicleta de reparto" />
+      </div>
+      <button type="button" class="btn btn-primary" (click)="create()" [disabled]="saving">Crear</button>
+    </div>
+  </app-modal>
 
   <div class="data-table-wrap">
     <table class="data-table">

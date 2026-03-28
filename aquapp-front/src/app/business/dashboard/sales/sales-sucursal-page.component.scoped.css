@@ -1,0 +1,74 @@
+.sucursal-counter-card {
+  margin: 0 0 1.5rem;
+  padding: 1.35rem 1.5rem;
+  border-radius: 14px;
+  border: 1px solid #c7d2fe;
+  background: linear-gradient(160deg, #f5f7ff 0%, #eef2ff 100%);
+}
+
+.sucursal-counter-visual {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.85rem;
+  max-width: 22rem;
+  margin: 0 auto;
+}
+
+.sucursal-counter-visual ::ng-deep app-garrafon-jug.jug-xl {
+  width: 7.25rem;
+}
+
+::ng-deep .jug-xl .garrafon-jug-svg {
+  width: 120px;
+  height: auto;
+  filter: drop-shadow(0 6px 14px rgb(99 102 241 / 22%));
+}
+
+.qty-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.qty-btn {
+  width: 3rem;
+  height: 3rem;
+  padding: 0;
+  font-size: 1.45rem;
+  font-weight: 700;
+  line-height: 1;
+  border-radius: 12px;
+}
+
+.qty-value {
+  min-width: 3.5rem;
+  text-align: center;
+  font-size: 2rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: #312e81;
+}
+
+.product-hint {
+  margin: 0;
+  font-size: 0.88rem;
+  color: #4b5563;
+}
+
+.total-line {
+  margin: 0;
+  font-size: 1rem;
+  color: #374151;
+}
+
+.register-btn {
+  min-width: 12rem;
+  margin-top: 0.35rem;
+}
+
+.hint-muted {
+  margin: 0.5rem 0 0;
+  color: #9ca3af;
+  font-size: 0.9rem;
+}

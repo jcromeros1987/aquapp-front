@@ -38,7 +38,8 @@ export class ComingSoonComponent implements OnInit, OnDestroy {
   }
 
   private relativeDashboardPath(url: string): string {
-    const match = url.match(/\/dashboard\/?(.*)$/);
+    const pathOnly = url.split('?')[0] ?? url;
+    const match = pathOnly.match(/\/dashboard\/?(.*)$/);
     return (match?.[1] ?? '').replace(/\/$/, '');
   }
 }

@@ -1,14 +1,25 @@
 <section class="home-card">
   <h1>Inicio</h1>
   <p class="home-quick-links">
-    <a routerLink="/dashboard/venta" class="home-cta">Venta diaria y entregas</a>
+    <a routerLink="/dashboard/venta/rapida" class="home-cta">Venta a domicilio / entregas</a>
     <span class="home-quick-sep">·</span>
-    <span class="home-quick-hint">registro de ventas y entrega rápida de garrafones</span>
+    <a routerLink="/dashboard/venta/registro-diario" class="home-cta">Registro diario de ventas</a>
+    <span class="home-quick-sep">·</span>
+    <a routerLink="/dashboard/venta/sucursal" class="home-cta">Venta en sucursal</a>
+    <span class="home-quick-sep">·</span>
+    <a routerLink="/dashboard/venta/historial" class="home-cta">Historial de ventas</a>
+    <span class="home-quick-sep">·</span>
+    <a routerLink="/dashboard/gastos" class="home-cta">Gastos</a>
+    <span class="home-quick-sep">·</span>
+    <span class="home-quick-hint">totales por sucursal · entrega de garrafones en planta</span>
   </p>
   <p class="lead">
     Resumen de los últimos 14 días: <strong>ventas por día</strong> (ingresos) y
-    <strong>gastos estimados</strong> según costo unitario × cantidad vendida en cada venta. Las
-    líneas punteadas marcan el <strong>promedio diario</strong> en el periodo.
+    <strong>gastos</strong>: costo de mercancía vendida (costo × cantidad) más los
+    <strong>sueldos a repartidores</strong> (
+    <a routerLink="/dashboard/gastos/sueldos">Gastos → Sueldos</a>) y los <strong>pagos por insumos</strong> (
+    <a routerLink="/dashboard/gastos/insumos">Gastos → Insumos</a>). Las líneas punteadas marcan el
+    <strong>promedio diario</strong> en el periodo.
   </p>
 </section>
 
@@ -36,7 +47,7 @@
 
   <div class="chart-legend" *ngIf="summary.range_days > 0 && summary.series.length">
     <span class="lg lg-sales">■ Ventas</span>
-    <span class="lg lg-exp">■ Gastos (costo × ud.)</span>
+    <span class="lg lg-exp">■ Gastos (mercancía + sueldos)</span>
     <span class="lg lg-avg-s">— Media ventas</span>
     <span class="lg lg-avg-e">— Media gastos</span>
   </div>
@@ -111,8 +122,11 @@
 
 <section class="home-card home-card--footer">
   <p class="hint">
-    <strong>Venta diaria</strong> en el menú lateral (🧾) o
-    <a routerLink="/dashboard/venta">abrir aquí</a>. En
+    <strong>Ventas</strong> en el menú lateral (🧾: domicilio, registro, sucursal e historial) o
+    <a routerLink="/dashboard/venta/rapida">venta a domicilio</a> /
+    <a routerLink="/dashboard/venta/registro-diario">registro diario</a> /
+    <a routerLink="/dashboard/venta/sucursal">venta en sucursal</a> /
+    <a routerLink="/dashboard/venta/historial">historial</a>. En
     <strong>Configuración → Gestionar menú</strong> puedes reordenar el menú; los ítems base
     vuelven a fusionarse al recargar si faltaban.
   </p>

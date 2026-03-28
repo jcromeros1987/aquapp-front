@@ -1,12 +1,33 @@
 <div class="page-card">
-  <h1>Rutas de reparto</h1>
+  <h1>Rutas de distribución</h1>
   <p class="subtitle">
-    Catálogo de <strong>rutas</strong> (zonas o recorridos). Asigna cada cliente a una ruta en
-    <strong>Clientes</strong>.
+    Catálogo de <strong>rutas</strong> (centro, poniente, colonias, etc.). En <strong>Clientes</strong> puedes
+    vincular a cada cliente a una o varias rutas; en <strong>Personal</strong> asigna rutas a los
+    repartidores.
   </p>
 
   <p class="alert alert-error" *ngIf="error">{{ error }}</p>
   <p class="alert alert-ok" *ngIf="okMsg">{{ okMsg }}</p>
+
+  <div class="toolbar">
+    <button type="button" class="btn btn-primary" (click)="addRouteModalOpen = true">Nueva ruta</button>
+  </div>
+
+  <app-modal [(open)]="addRouteModalOpen" title="Nueva ruta de distribución" size="md">
+    <div class="toolbar wrap route-add">
+      <div class="field grow">
+        <span class="field-label">Nombre</span>
+        <input type="text" [(ngModel)]="newRouteName" placeholder="Ej. Zona oriente" />
+      </div>
+      <div class="field">
+        <span class="field-label">Orden</span>
+        <input type="number" min="0" [(ngModel)]="newRouteOrder" />
+      </div>
+      <button type="button" class="btn btn-primary" (click)="addRoute()" [disabled]="savingRoute">
+        Agregar
+      </button>
+    </div>
+  </app-modal>
 
   <h2 class="section-title">Listado</h2>
   <div class="data-table-wrap routes-table">
@@ -55,20 +76,5 @@
         </tr>
       </tbody>
     </table>
-  </div>
-
-  <h2 class="section-title">Nueva ruta</h2>
-  <div class="toolbar wrap route-add">
-    <div class="field grow">
-      <span class="field-label">Nombre</span>
-      <input type="text" [(ngModel)]="newRouteName" placeholder="Ej. Zona oriente" />
-    </div>
-    <div class="field">
-      <span class="field-label">Orden</span>
-      <input type="number" min="0" [(ngModel)]="newRouteOrder" />
-    </div>
-    <button type="button" class="btn btn-primary" (click)="addRoute()" [disabled]="savingRoute">
-      Agregar
-    </button>
   </div>
 </div>

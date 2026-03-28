@@ -1,0 +1,69 @@
+<div class="page-card zona-page">
+  <h1>Zona</h1>
+  <p class="subtitle">
+    Vista de <strong>Santa María Ixtiyucan</strong> con mapa interactivo OpenStreetMap (Leaflet): mismas coordenadas
+    GPS que en la ficha del cliente. Un pin por cliente; pulsa el pin para ver consumo de garrafón (semana, mes y año)
+    según ventas en tus sucursales. Abajo, puntos clave de calibración.
+  </p>
+
+  <p class="alert alert-error" *ngIf="error">{{ error }}</p>
+  <p class="alert alert-error" *ngIf="mapConfigError && !error">{{ mapConfigError }}</p>
+
+  <p class="hint zona-branch-hint" *ngIf="branchId != null">
+    Filtrando por la sucursal elegida en el menú lateral.
+  </p>
+  <p class="hint zona-branch-hint" *ngIf="branchId === null">
+    Mostrando clientes de <strong>todas tus sucursales</strong> (menú lateral: «Todas las sucursales»).
+  </p>
+
+  <p class="hint" *ngIf="periodLabel">{{ periodLabel }}</p>
+  <p class="hint" *ngIf="mapHint">{{ mapHint }}</p>
+  <p class="state" *ngIf="loading">Cargando datos…</p>
+
+  <div class="map-layout" *ngIf="mapConfigOk">
+    <div class="map-wrap static-map-wrap">
+      <div class="static-map">
+        <div #mapContainer class="zona-leaflet-host" role="presentation"></div>
+      </div>
+      <p class="map-attribution" *ngIf="zoneMapAttribution as attr">
+        <a [href]="attr.href" target="_blank" rel="noopener noreferrer">{{ attr.text }}</a>
+      </p>
+    </div>
+
+    <aside class="zona-detail" *ngIf="selectedPin as pin">
+      <h2 class="detail-title">{{ pin.name || 'Cliente #' + pin.id }}</h2>
+      <p class="detail-addr" *ngIf="pin.street || pin.num_ext">
+        {{ pin.street }} {{ pin.num_ext }} {{ pin.num_int }}
+      </p>
+      <p class="detail-coord">GPS: {{ pin.latitude }}, {{ pin.longitude }}</p>
+      <ul class="detail-stats">
+        <li><span>Garrafones (semana)</span> <strong>{{ pin.garrafones_week }}</strong></li>
+        <li><span>Garrafones (mes)</span> <strong>{{ pin.garrafones_month }}</strong></li>
+        <li><span>Garrafones (año)</span> <strong>{{ pin.garrafones_year }}</strong></li>
+      </ul>
+    </aside>
+  </div>
+
+  <p class="hint zona-footnote" *ngIf="pins.length">
+    {{ pins.length }} cliente(s) con GPS. Los totales suman ventas de garrafón (Venta de agua / Garrafon) en tus
+    sucursales.
+  </p>
+
+  <section class="ref-points" *ngIf="mapConfigOk && refPointsEnImagen.length">
+    <h2 class="ref-points-title">Puntos clave (calibración)</h2>
+    <p class="hint ref-points-intro">
+      Coordenadas de referencia respecto al rectángulo <code>bounds</code> del entorno; si cambias el área del mapa,
+      edita <code>santa-maria-ixtiyucan-map.ts</code>.
+    </p>
+    <ul class="ref-points-list">
+      <li *ngFor="let r of refPointsEnImagen">
+        <strong>{{ r.label }}</strong>
+        <span class="ref-gps">{{ r.lat }}, {{ r.lng }}</span>
+        <span class="ref-pct" *ngIf="r.clamped">Recortado al borde de la imagen</span>
+        <span class="ref-pct" *ngIf="!r.clamped"
+          >~ {{ r.leftPct | number : '1.1-1' }} % izq., {{ r.topPct | number : '1.1-1' }} % arriba</span
+        >
+      </li>
+    </ul>
+  </section>
+</div>

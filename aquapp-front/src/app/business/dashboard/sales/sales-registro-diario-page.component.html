@@ -1,0 +1,144 @@
+<div class="page-card wide">
+  <app-sales-venta-subnav />
+
+  <h1>Registro diario de ventas</h1>
+  <p class="subtitle">
+    Anota lo vendido por día y revisa el total del día. El <strong>historial completo</strong> de la sucursal
+    está en <a routerLink="/dashboard/venta/historial">Historial de ventas</a>. El servidor asigna al vendedor
+    según tu sesión.
+  </p>
+
+  <p class="alert alert-error" *ngIf="error">{{ error }}</p>
+  <p class="alert alert-ok" *ngIf="okMsg">{{ okMsg }}</p>
+
+  <p class="branch-context-hint" *ngIf="branchId == null">
+    Elige una <strong>sucursal concreta</strong> en el menú lateral para registrar ventas y ver el listado del día.
+  </p>
+
+  <ng-container *ngIf="branchId != null">
+    <div class="toolbar">
+      <button type="button" class="btn btn-primary" (click)="addSaleModalOpen = true">Nueva venta</button>
+    </div>
+
+    <app-modal [(open)]="addSaleModalOpen" title="Nueva venta" size="lg">
+      <div class="toolbar wrap">
+        <div class="field">
+          <span class="field-label">Producto</span>
+          <select [(ngModel)]="formProductId" (ngModelChange)="onProductPicked()">
+            <option [ngValue]="null">—</option>
+            <option *ngFor="let p of products" [ngValue]="p.id">{{ p.name }} ({{ p.cost }})</option>
+          </select>
+        </div>
+        <div class="field">
+          <span class="field-label">Fecha</span>
+          <input type="date" [(ngModel)]="formDate" />
+        </div>
+        <div class="field">
+          <span class="field-label">Costo unit.</span>
+          <input
+            type="number"
+            step="0.01"
+            min="0"
+            [(ngModel)]="formCost"
+            (ngModelChange)="recalcTotal()"
+          />
+        </div>
+        <div class="field">
+          <span class="field-label">Cantidad</span>
+          <input
+            type="number"
+            min="1"
+            [(ngModel)]="formQty"
+            (ngModelChange)="recalcTotal()"
+          />
+        </div>
+        <div class="field">
+          <span class="field-label">Total</span>
+          <input type="number" step="0.01" [(ngModel)]="formTotal" readonly />
+        </div>
+        <div class="field grow">
+          <span class="field-label">Observaciones</span>
+          <input type="text" [(ngModel)]="formObs" />
+        </div>
+        <button type="button" class="btn btn-primary" (click)="create()" [disabled]="saving">
+          Registrar venta
+        </button>
+      </div>
+    </app-modal>
+
+    <h2 class="section-title">Ventas de hoy ({{ todayStr }})</h2>
+    <div class="sales-summary">
+      <div class="sales-summary-row">
+        <span class="sales-summary-label">Total del día</span>
+        <strong class="sales-summary-amount">{{ totalVendidoHoy | number : '1.2-2' }}</strong>
+      </div>
+      <p class="sales-summary-meta">{{ salesToday.length }} venta(s) hoy</p>
+    </div>
+    <div class="data-table-wrap" *ngIf="salesToday.length > 0; else sinVentasHoy">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Producto</th>
+            <th>Cant.</th>
+            <th>Total</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let s of salesToday">
+            <ng-container *ngIf="editing?.id !== s.id">
+              <td>{{ s.date }}</td>
+              <td>{{ productLabel(s) }}</td>
+              <td>{{ s.quantity }}</td>
+              <td>{{ s.total_amount }}</td>
+            </ng-container>
+            <ng-container *ngIf="editing?.id === s.id">
+              <td><input type="date" [(ngModel)]="editDate" /></td>
+              <td>{{ productLabel(s) }}</td>
+              <td>
+                <input
+                  type="number"
+                  min="1"
+                  [(ngModel)]="editQty"
+                  (ngModelChange)="recalcEditTotal()"
+                />
+              </td>
+              <td>
+                <input type="number" step="0.01" [(ngModel)]="editTotal" />
+              </td>
+            </ng-container>
+            <td>
+              <div class="actions" *ngIf="editing?.id !== s.id">
+                <button type="button" class="btn btn-ghost" (click)="startEdit(s)">Editar</button>
+                <button type="button" class="btn btn-danger" (click)="remove(s)">Eliminar</button>
+              </div>
+              <div class="actions stack" *ngIf="editing?.id === s.id">
+                <div class="field">
+                  <span class="field-label">Costo unit.</span>
+                  <input
+                    type="number"
+                    step="0.01"
+                    [(ngModel)]="editCost"
+                    (ngModelChange)="recalcEditTotal()"
+                  />
+                </div>
+                <div class="field">
+                  <span class="field-label">Obs.</span>
+                  <input type="text" [(ngModel)]="editObs" />
+                </div>
+                <button type="button" class="btn btn-primary" (click)="saveEdit()" [disabled]="saving">
+                  Guardar
+                </button>
+                <button type="button" class="btn btn-ghost" (click)="cancelEdit()">Cancelar</button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <ng-template #sinVentasHoy>
+      <p class="sales-summary-meta">Sin ventas registradas hoy en esta sucursal.</p>
+    </ng-template>
+  </ng-container>
+</div>

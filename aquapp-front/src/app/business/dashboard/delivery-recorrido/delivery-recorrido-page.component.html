@@ -1,0 +1,133 @@
+<div class="page-card wide">
+  <h1>Recorrido por ruta</h1>
+  <p class="subtitle">
+    Clientes en el orden de visita para cada ruta. En la pestaña <strong>Lista</strong> usa
+    <strong>Subir</strong> y <strong>Bajar</strong>; en <strong>Mapa</strong> ves el trazo en GPS siguiendo ese orden.
+    Coordenadas en
+    <a routerLink="/dashboard/clientes" routerLinkActive="active">Clientes</a>; al marcar rutas allí, el orden de
+    selección define la secuencia inicial.
+  </p>
+
+  <div class="toolbar">
+    <button type="button" class="btn btn-ghost" [disabled]="loading || reordering" (click)="reload()">
+      @if (loading) {
+        Cargando…
+      } @else if (reordering) {
+        Guardando orden…
+      } @else {
+        Actualizar
+      }
+    </button>
+  </div>
+
+  @if (error) {
+    <p class="alert alert-error">{{ error }}</p>
+  }
+
+  @if (!loading && routes.length === 0 && !error) {
+    <p class="empty-state">No hay rutas en el catálogo. Créalas en Catálogos → Rutas de distribución.</p>
+  }
+
+  @if (routes.length) {
+    <nav class="view-tabs" aria-label="Vista">
+      <button
+        type="button"
+        class="view-tab"
+        [class.active]="viewTab === 'lista'"
+        (click)="setViewTab('lista')"
+      >
+        Lista
+      </button>
+      <button
+        type="button"
+        class="view-tab"
+        [class.active]="viewTab === 'mapa'"
+        (click)="setViewTab('mapa')"
+      >
+        Mapa
+      </button>
+    </nav>
+
+    <nav class="route-tabs" aria-label="Rutas de reparto">
+      @for (r of routes; track r.id) {
+        <button
+          type="button"
+          class="route-tab"
+          [class.active]="activeRouteId === r.id"
+          (click)="selectRoute(r.id)"
+        >
+          {{ r.name }}
+          <span class="tab-count">{{ stopsFor(r).length }}</span>
+        </button>
+      }
+    </nav>
+
+    @if (selectedRoute; as ar) {
+      @if (stopsFor(ar).length === 0) {
+        <p class="empty-route">Ningún cliente asignado a esta ruta.</p>
+      } @else {
+        @if (viewTab === 'lista') {
+          <ol class="stop-list">
+            @for (c of stopsFor(ar); track c.id; let i = $index) {
+              <li class="stop-item">
+                <span class="stop-badge">{{ stopNumber(c, ar) }}</span>
+                <div class="stop-body">
+                  <div class="stop-name">{{ c.name }}</div>
+                  <div class="stop-address">{{ addressLine(c) }}</div>
+                  @if (c.description.trim()) {
+                    <div class="stop-note">{{ c.description }}</div>
+                  }
+                  @if (c.latitude != null && c.longitude != null) {
+                    <div class="stop-coords muted">
+                      {{ c.latitude | number: '1.5-5' }}, {{ c.longitude | number: '1.5-5' }}
+                    </div>
+                  }
+                </div>
+                <div class="stop-reorder" role="group" aria-label="Orden en ruta">
+                  <button
+                    type="button"
+                    class="btn-move"
+                    [disabled]="i === 0 || reordering || loading"
+                    (click)="moveStop(ar, i, -1)"
+                    aria-label="Subir una posición"
+                  >
+                    Subir
+                  </button>
+                  <button
+                    type="button"
+                    class="btn-move"
+                    [disabled]="i === stopsFor(ar).length - 1 || reordering || loading"
+                    (click)="moveStop(ar, i, 1)"
+                    aria-label="Bajar una posición"
+                  >
+                    Bajar
+                  </button>
+                </div>
+              </li>
+            }
+          </ol>
+        } @else {
+          <div class="map-section">
+            @if (missingCoordsCount(ar) > 0) {
+              <p class="map-banner">
+                <strong>{{ missingCoordsCount(ar) }}</strong>
+                cliente(s) de esta ruta no tienen GPS en
+                <a routerLink="/dashboard/clientes">Clientes</a>; el mapa solo conecta los que sí tienen latitud y
+                longitud, en el <strong>mismo orden de paradas</strong>.
+              </p>
+            }
+            @if (stopsWithCoords(ar).length === 0) {
+              <p class="map-banner map-banner--warn">
+                Ningún cliente de esta ruta tiene coordenadas. Añádelas en la ficha de cada cliente para ver el mapa.
+              </p>
+            }
+            <div #mapContainer class="recorrido-leaflet-host" role="presentation"></div>
+            <p class="map-footnote muted">
+              OpenStreetMap · la línea violeta sigue el orden de visita (1 → 2 → …).
+            </p>
+          </div>
+        }
+      }
+    }
+  }
+</div>

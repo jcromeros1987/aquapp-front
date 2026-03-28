@@ -20,6 +20,15 @@ export class InventoryUnitsApiService {
       .pipe(map((r) => r.items ?? []));
   }
 
+  /** Todas las piezas de un tipo INVENTARIO en la sucursal (detalle al filtrar por pestaña). */
+  listByCatalog(branchId: number, catProductId: number): Observable<InventoryUnitRow[]> {
+    return this.http
+      .get<{ items?: InventoryUnitRow[] }>(
+        ApiEndpoints.branch.inventoryUnitsByCatalog(branchId, catProductId),
+      )
+      .pipe(map((r) => r.items ?? []));
+  }
+
   /** Unidades en estado `en_planta` en cualquier renglón de inventario de la sucursal. */
   listAvailableForBranch(branchId: number): Observable<InventoryUnitRow[]> {
     return this.http

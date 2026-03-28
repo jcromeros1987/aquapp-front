@@ -10,7 +10,9 @@ export interface CustomerPayload {
   num_ext: string;
   num_int: string;
   description: string;
-  delivery_route_id?: number | null;
+  delivery_route_ids?: number[];
+  latitude?: number | null;
+  longitude?: number | null;
 }
 
 @Injectable({ providedIn: 'root' })

@@ -1,19 +1,20 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
+import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { CatProduct, Customer, InventoryRow, InventoryUnitRow } from '../../../core/models/api.models';
-import { BranchApiService } from '../../../core/services/branch-api.service';
 import { CatalogApiService } from '../../../core/services/catalog-api.service';
 import { CustomerApiService } from '../../../core/services/customer-api.service';
+import { DashboardBranchContextService } from '../../../core/services/dashboard-branch-context.service';
 import { InventoryApiService } from '../../../core/services/inventory-api.service';
 import { InventoryUnitsApiService } from '../../../core/services/inventory-units-api.service';
 import { apiErrorMessage } from '../../../core/utils/api-error';
-import { BranchSelectComponent } from '../shared/branch-select.component';
+import { AppModalComponent } from '../../../shared/ui/app-modal.component';
 
 @Component({
   selector: 'app-inventory-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, BranchSelectComponent],
+  imports: [CommonModule, FormsModule, AppModalComponent],
   templateUrl: './inventory-page.component.html',
   styleUrls: ['../styles/crud-page.css', './inventory-page.component.scoped.css'],
 })
@@ -21,7 +22,7 @@ export class InventoryPageComponent implements OnInit {
   private readonly inventoryApi = inject(InventoryApiService);
   private readonly unitsApi = inject(InventoryUnitsApiService);
   private readonly catalogApi = inject(CatalogApiService);
-  private readonly branchApi = inject(BranchApiService);
+  private readonly branchCtx = inject(DashboardBranchContextService);
   private readonly customerApi = inject(CustomerApiService);
 
   branchId: number | null = null;
@@ -29,6 +30,10 @@ export class InventoryPageComponent implements OnInit {
   items: InventoryRow[] = [];
   customers: Customer[] = [];
 
+  /** `null` = pestaña «Todos»; si no, filtra existencias por `cat_product_id`. */
+  inventoryTabCatId: number | null = null;
+
+  addModalOpen = false;
   formCatId: number | null = null;
   formQty: number | null = null;
   formObs = '';
@@ -40,12 +45,21 @@ export class InventoryPageComponent implements OnInit {
   expandedInventoryId: number | null = null;
   unitRows: InventoryUnitRow[] = [];
   unitsLoading = false;
+  /** Listado plano al filtrar por pestaña de tipo (todas las piezas del catálogo en la sucursal). */
+  tabDetailUnits: InventoryUnitRow[] = [];
+  tabDetailLoading = false;
   draftCustomerByUnitId: Record<number, number | null> = {};
   bulkAddCount: number | null = null;
 
   saving = false;
   error = '';
   okMsg = '';
+
+  constructor() {
+    toObservable(this.branchCtx.branchId)
+      .pipe(takeUntilDestroyed())
+      .subscribe((id) => this.onBranchChange(id));
+  }
 
   ngOnInit(): void {
     this.catalogApi.list('INVENTARIO').subscribe({
@@ -55,17 +69,6 @@ export class InventoryPageComponent implements OnInit {
 
     this.customerApi.list().subscribe({
       next: (c) => (this.customers = c),
-      error: (e) => {
-        this.error = this.error || apiErrorMessage(e);
-      },
-    });
-
-    this.branchApi.list().subscribe({
-      next: (branches) => {
-        if (branches.length > 0 && this.branchId == null) {
-          this.onBranchChange(branches[0].id);
-        }
-      },
       error: (e) => {
         this.error = this.error || apiErrorMessage(e);
       },
@@ -96,11 +99,74 @@ export class InventoryPageComponent implements OnInit {
     return this.catalog.filter((c) => !used.has(c.id));
   }
 
+  filteredItems(): InventoryRow[] {
+    if (this.inventoryTabCatId == null) {
+      return this.items;
+    }
+    return this.items.filter((i) => i.cat_product_id === this.inventoryTabCatId);
+  }
+
+  /**
+   * Número a mostrar en pestañas: el mayor entre piezas con código (`units_tracked`) y la cantidad del renglón.
+   * Así no se muestra «1» cuando hay decenas en cantidad operativa y aún pocos (o un solo) registro de unidad.
+   */
+  rowPieceCount(row: InventoryRow): number {
+    const tracked = Number(row.units_tracked ?? 0);
+    const q = Number(row.quantity);
+    const qty = Number.isFinite(q) && q > 0 ? Math.floor(q) : 0;
+    const t = Number.isFinite(tracked) && tracked > 0 ? Math.floor(tracked) : 0;
+    return Math.max(t, qty);
+  }
+
+  /** Total de piezas (o cantidades) en la sucursal, todos los tipos. */
+  totalPieceCountAll(): number {
+    return this.items.reduce((sum, r) => sum + this.rowPieceCount(r), 0);
+  }
+
+  /** Total de piezas (o cantidades) para un tipo de catálogo. */
+  pieceCountByCatalog(catId: number): number {
+    return this.items
+      .filter((i) => i.cat_product_id === catId)
+      .reduce((sum, r) => sum + this.rowPieceCount(r), 0);
+  }
+
+  selectedTabCatalog(): CatProduct | null {
+    if (this.inventoryTabCatId == null) return null;
+    return this.catalog.find((c) => c.id === this.inventoryTabCatId) ?? null;
+  }
+
+  selectInventoryTab(catId: number | null): void {
+    this.inventoryTabCatId = catId;
+    const exp = this.expandedInventoryId;
+    if (exp != null) {
+      const row = this.items.find((r) => r.id === exp);
+      if (!row || (catId != null && row.cat_product_id !== catId)) {
+        this.closeUnits();
+      }
+    }
+    const ed = this.editing;
+    if (ed != null && catId != null && ed.cat_product_id !== catId) {
+      this.cancelEdit();
+    }
+    if (catId != null && this.availableTypes().some((c) => c.id === catId)) {
+      this.formCatId = catId;
+    }
+    if (catId != null && this.branchId != null) {
+      this.loadTabDetailUnits();
+    } else {
+      this.tabDetailUnits = [];
+      this.tabDetailLoading = false;
+    }
+  }
+
   onBranchChange(id: number | null): void {
     this.branchId = id;
     this.okMsg = '';
     this.error = '';
     this.items = [];
+    this.inventoryTabCatId = null;
+    this.tabDetailUnits = [];
+    this.tabDetailLoading = false;
     this.cancelEdit();
     this.closeUnits();
     this.formCatId = null;
@@ -122,6 +188,9 @@ export class InventoryPageComponent implements OnInit {
         if (this.expandedInventoryId != null) {
           const still = rows.some((r) => r.id === this.expandedInventoryId);
           if (!still) this.closeUnits();
+        }
+        if (this.inventoryTabCatId != null) {
+          this.loadTabDetailUnits();
         }
       },
       error: (e) => (this.error = apiErrorMessage(e)),
@@ -164,6 +233,39 @@ export class InventoryPageComponent implements OnInit {
     });
   }
 
+  loadTabDetailUnits(): void {
+    if (this.branchId == null || this.inventoryTabCatId == null) {
+      this.tabDetailUnits = [];
+      return;
+    }
+    this.tabDetailLoading = true;
+    this.unitsApi.listByCatalog(this.branchId, this.inventoryTabCatId).subscribe({
+      next: (items) => {
+        this.tabDetailUnits = items;
+        for (const u of items) {
+          this.draftCustomerByUnitId = { ...this.draftCustomerByUnitId, [u.id]: u.customer_id };
+        }
+        this.tabDetailLoading = false;
+      },
+      error: (e) => {
+        this.error = apiErrorMessage(e);
+        this.tabDetailLoading = false;
+      },
+    });
+  }
+
+  /** Renglón expandido tiene prioridad; si no, el `inventory_id` de la propia pieza (vista por pestaña). */
+  private inventoryIdForUnitOps(u: InventoryUnitRow): number | null {
+    return this.expandedInventoryId ?? u.inventory_id ?? null;
+  }
+
+  private refreshAfterUnitMutation(): void {
+    if (this.expandedInventoryId != null) {
+      this.loadUnits();
+    }
+    this.reloadItems();
+  }
+
   unitDraftCustomer(unitId: number): number | null {
     return this.draftCustomerByUnitId[unitId] ?? null;
   }
@@ -173,7 +275,9 @@ export class InventoryPageComponent implements OnInit {
   }
 
   assignUnit(u: InventoryUnitRow): void {
-    if (this.branchId == null || this.expandedInventoryId == null) return;
+    if (this.branchId == null) return;
+    const invId = this.inventoryIdForUnitOps(u);
+    if (invId == null) return;
     const cid = this.draftCustomerByUnitId[u.id];
     if (cid == null) {
       this.error = 'Elige un cliente para asignar la unidad.';
@@ -182,15 +286,14 @@ export class InventoryPageComponent implements OnInit {
     this.saving = true;
     this.error = '';
     this.unitsApi
-      .update(this.branchId, this.expandedInventoryId, u.id, {
+      .update(this.branchId, invId, u.id, {
         status: 'con_cliente',
         customer_id: cid,
       })
       .subscribe({
         next: () => {
           this.saving = false;
-          this.loadUnits();
-          this.reloadItems();
+          this.refreshAfterUnitMutation();
         },
         error: (e) => {
           this.error = apiErrorMessage(e);
@@ -200,19 +303,20 @@ export class InventoryPageComponent implements OnInit {
   }
 
   returnUnit(u: InventoryUnitRow): void {
-    if (this.branchId == null || this.expandedInventoryId == null) return;
+    if (this.branchId == null) return;
+    const invId = this.inventoryIdForUnitOps(u);
+    if (invId == null) return;
     this.saving = true;
     this.error = '';
     this.unitsApi
-      .update(this.branchId, this.expandedInventoryId, u.id, {
+      .update(this.branchId, invId, u.id, {
         status: 'en_planta',
         customer_id: null,
       })
       .subscribe({
         next: () => {
           this.saving = false;
-          this.loadUnits();
-          this.reloadItems();
+          this.refreshAfterUnitMutation();
         },
         error: (e) => {
           this.error = apiErrorMessage(e);
@@ -222,19 +326,20 @@ export class InventoryPageComponent implements OnInit {
   }
 
   disputaUnit(u: InventoryUnitRow): void {
-    if (this.branchId == null || this.expandedInventoryId == null) return;
+    if (this.branchId == null) return;
+    const invId = this.inventoryIdForUnitOps(u);
+    if (invId == null) return;
     this.saving = true;
     this.error = '';
     this.unitsApi
-      .update(this.branchId, this.expandedInventoryId, u.id, {
+      .update(this.branchId, invId, u.id, {
         status: 'en_disputa',
         customer_id: u.customer_id,
       })
       .subscribe({
         next: () => {
           this.saving = false;
-          this.loadUnits();
-          this.reloadItems();
+          this.refreshAfterUnitMutation();
         },
         error: (e) => {
           this.error = apiErrorMessage(e);
@@ -244,20 +349,21 @@ export class InventoryPageComponent implements OnInit {
   }
 
   bajaUnit(u: InventoryUnitRow): void {
-    if (this.branchId == null || this.expandedInventoryId == null) return;
+    if (this.branchId == null) return;
+    const invId = this.inventoryIdForUnitOps(u);
+    if (invId == null) return;
     if (!confirm(`¿Marcar como baja la unidad «${u.codigo}»? Dejará de contar en la cantidad operativa.`)) return;
     this.saving = true;
     this.error = '';
     this.unitsApi
-      .update(this.branchId, this.expandedInventoryId, u.id, {
+      .update(this.branchId, invId, u.id, {
         status: 'baja',
         customer_id: null,
       })
       .subscribe({
         next: () => {
           this.saving = false;
-          this.loadUnits();
-          this.reloadItems();
+          this.refreshAfterUnitMutation();
         },
         error: (e) => {
           this.error = apiErrorMessage(e);
@@ -267,12 +373,13 @@ export class InventoryPageComponent implements OnInit {
   }
 
   removeUnit(u: InventoryUnitRow): void {
-    if (this.branchId == null || this.expandedInventoryId == null) return;
+    if (this.branchId == null) return;
+    const invId = this.inventoryIdForUnitOps(u);
+    if (invId == null) return;
     if (!confirm(`¿Eliminar la unidad «${u.codigo}» del sistema?`)) return;
-    this.unitsApi.delete(this.branchId, this.expandedInventoryId, u.id).subscribe({
+    this.unitsApi.delete(this.branchId, invId, u.id).subscribe({
       next: () => {
-        this.loadUnits();
-        this.reloadItems();
+        this.refreshAfterUnitMutation();
       },
       error: (e) => (this.error = apiErrorMessage(e)),
     });
@@ -313,6 +420,7 @@ export class InventoryPageComponent implements OnInit {
           this.formCatId = null;
           this.formQty = null;
           this.formObs = '';
+          this.addModalOpen = false;
           this.saving = false;
           this.reloadItems('Registro agregado.');
         },

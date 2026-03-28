@@ -9,14 +9,18 @@
   <p class="alert alert-ok" *ngIf="okMsg">{{ okMsg }}</p>
 
   <div class="toolbar">
-    <div class="field">
-      <span class="field-label">Nuevo rubro</span>
-      <input type="text" [(ngModel)]="newName" placeholder="Ej. Jabón para planta" />
-    </div>
-    <button type="button" class="btn btn-primary" (click)="create()" [disabled]="saving">
-      Crear
-    </button>
+    <button type="button" class="btn btn-primary" (click)="addModalOpen = true">Nuevo rubro</button>
   </div>
+
+  <app-modal [(open)]="addModalOpen" title="Nuevo rubro de insumos" size="md">
+    <div class="toolbar">
+      <div class="field">
+        <span class="field-label">Nombre</span>
+        <input type="text" [(ngModel)]="newName" placeholder="Ej. Jabón para planta" />
+      </div>
+      <button type="button" class="btn btn-primary" (click)="create()" [disabled]="saving">Crear</button>
+    </div>
+  </app-modal>
 
   <div class="data-table-wrap">
     <table class="data-table">

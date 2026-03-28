@@ -1,48 +1,81 @@
 <div class="page-card">
   <h1>Clientes</h1>
   <p class="subtitle">
-    Datos de contacto y dirección. Gestiona el catálogo en
+    Dirección, rutas de distribución (pueden ser varias; el orden en que las marques define la secuencia de paradas en cada recorrido) y coordenadas GPS para ubicarlos en el mapa.
+    Define las rutas en
     <strong>Catálogos</strong> →
-    <a routerLink="/dashboard/catalogo-rutas">Rutas de reparto</a>; aquí solo eliges la ruta de cada
-    cliente.
+    <a routerLink="/dashboard/rutas-distribucion">Rutas de distribución</a>.
   </p>
 
   <p class="alert alert-error" *ngIf="error">{{ error }}</p>
   <p class="alert alert-ok" *ngIf="okMsg">{{ okMsg }}</p>
 
-  <h2 class="section-title">Nuevo cliente</h2>
-  <div class="form-grid">
-    <div class="field">
-      <span class="field-label">Nombre</span>
-      <input type="text" [(ngModel)]="form.name" />
-    </div>
-    <div class="field full">
-      <span class="field-label">Ruta de reparto</span>
-      <select [(ngModel)]="form.delivery_route_id">
-        <option [ngValue]="null">— Sin ruta —</option>
-        <option *ngFor="let r of routes" [ngValue]="r.id">{{ r.name }}</option>
-      </select>
-    </div>
-    <div class="field full">
-      <span class="field-label">Calle</span>
-      <input type="text" [(ngModel)]="form.street" />
-    </div>
-    <div class="field">
-      <span class="field-label">No. ext.</span>
-      <input type="text" [(ngModel)]="form.num_ext" />
-    </div>
-    <div class="field">
-      <span class="field-label">No. int.</span>
-      <input type="text" [(ngModel)]="form.num_int" />
-    </div>
-    <div class="field full">
-      <span class="field-label">Descripción</span>
-      <textarea [(ngModel)]="form.description"></textarea>
-    </div>
+  <div class="toolbar">
+    <button type="button" class="btn btn-primary" (click)="addModalOpen = true">Registrar cliente</button>
   </div>
-  <button type="button" class="btn btn-primary" (click)="create()" [disabled]="saving">
-    Registrar
-  </button>
+
+  <app-modal [(open)]="addModalOpen" title="Nuevo cliente" size="xl">
+    <div class="form-grid">
+      <div class="field">
+        <span class="field-label">Nombre</span>
+        <input type="text" [(ngModel)]="form.name" />
+      </div>
+      <div class="field full">
+        <span class="field-label">Rutas de distribución</span>
+        <div class="routes-checks" *ngIf="routes.length; else sinRutas">
+          <label *ngFor="let r of routes" class="route-check">
+            <input
+              type="checkbox"
+              [checked]="isRouteSelected(r.id, 'form')"
+              (change)="toggleRoute(r.id, 'form')"
+            />
+            {{ r.name }}
+          </label>
+        </div>
+        <ng-template #sinRutas>
+          <p class="hint">No hay rutas en el catálogo. Créalas primero en Catálogos.</p>
+        </ng-template>
+      </div>
+      <div class="field">
+        <span class="field-label">Latitud (GPS)</span>
+        <input type="number" step="0.000001" [(ngModel)]="form.latitude" placeholder="ej. 19.4326" />
+      </div>
+      <div class="field">
+        <span class="field-label">Longitud (GPS)</span>
+        <input type="number" step="0.000001" [(ngModel)]="form.longitude" placeholder="ej. -99.1332" />
+      </div>
+      <div class="field full map-block" *ngIf="formMapUrl() as mapUrl">
+        <span class="field-label">Vista en mapa</span>
+        <iframe
+          class="map-embed"
+          [title]="'Mapa cliente ' + form.name"
+          [src]="mapUrl"
+          loading="lazy"
+          referrerpolicy="no-referrer-when-downgrade"
+        ></iframe>
+      </div>
+      <div class="field full">
+        <span class="field-label">Calle</span>
+        <input type="text" [(ngModel)]="form.street" />
+      </div>
+      <div class="field">
+        <span class="field-label">No. ext.</span>
+        <input type="text" [(ngModel)]="form.num_ext" />
+      </div>
+      <div class="field">
+        <span class="field-label">No. int.</span>
+        <input type="text" [(ngModel)]="form.num_int" />
+      </div>
+      <div class="field full">
+        <span class="field-label">Descripción</span>
+        <textarea [(ngModel)]="form.description"></textarea>
+      </div>
+    </div>
+    <div class="toolbar modal-actions-row">
+      <button type="button" class="btn btn-primary" (click)="create()" [disabled]="saving">Registrar</button>
+      <button type="button" class="btn btn-ghost" (click)="addModalOpen = false">Cancelar</button>
+    </div>
+  </app-modal>
 
   <h2 class="section-title">Listado</h2>
   <div class="data-table-wrap">
@@ -50,7 +83,8 @@
       <thead>
         <tr>
           <th>Nombre</th>
-          <th>Ruta</th>
+          <th>Rutas</th>
+          <th>GPS</th>
           <th>Dirección</th>
           <th>Descripción</th>
           <th></th>
@@ -60,23 +94,48 @@
         <tr *ngFor="let c of customers">
           <ng-container *ngIf="editing?.id !== c.id">
             <td>{{ c.name }}</td>
-            <td>{{ routeLabel(c) }}</td>
+            <td class="routes-cell">{{ routesLabel(c) }}</td>
+            <td class="coord-cell">{{ coordLabel(c) }}</td>
             <td>{{ c.street }} {{ c.num_ext }} {{ c.num_int }}</td>
             <td class="desc">{{ c.description }}</td>
           </ng-container>
           <ng-container *ngIf="editing?.id === c.id">
-            <td colspan="4">
+            <td colspan="5">
               <div class="form-grid edit-grid">
                 <div class="field">
                   <span class="field-label">Nombre</span>
                   <input type="text" [(ngModel)]="editForm.name" />
                 </div>
                 <div class="field full">
-                  <span class="field-label">Ruta de reparto</span>
-                  <select [(ngModel)]="editForm.delivery_route_id">
-                    <option [ngValue]="null">— Sin ruta —</option>
-                    <option *ngFor="let r of routes" [ngValue]="r.id">{{ r.name }}</option>
-                  </select>
+                  <span class="field-label">Rutas de distribución</span>
+                  <div class="routes-checks" *ngIf="routes.length">
+                    <label *ngFor="let r of routes" class="route-check">
+                      <input
+                        type="checkbox"
+                        [checked]="isRouteSelected(r.id, 'edit')"
+                        (change)="toggleRoute(r.id, 'edit')"
+                      />
+                      {{ r.name }}
+                    </label>
+                  </div>
+                </div>
+                <div class="field">
+                  <span class="field-label">Latitud (GPS)</span>
+                  <input type="number" step="0.000001" [(ngModel)]="editForm.latitude" />
+                </div>
+                <div class="field">
+                  <span class="field-label">Longitud (GPS)</span>
+                  <input type="number" step="0.000001" [(ngModel)]="editForm.longitude" />
+                </div>
+                <div class="field full map-block" *ngIf="editMapUrl() as mapUrl">
+                  <span class="field-label">Vista en mapa</span>
+                  <iframe
+                    class="map-embed"
+                    [title]="'Mapa cliente ' + editForm.name"
+                    [src]="mapUrl"
+                    loading="lazy"
+                    referrerpolicy="no-referrer-when-downgrade"
+                  ></iframe>
                 </div>
                 <div class="field full">
                   <span class="field-label">Calle</span>

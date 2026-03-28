@@ -1,26 +1,28 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
+import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { CatProduct, ProductRow } from '../../../core/models/api.models';
 import { CatalogApiService } from '../../../core/services/catalog-api.service';
+import { DashboardBranchContextService } from '../../../core/services/dashboard-branch-context.service';
 import { ProductApiService } from '../../../core/services/product-api.service';
-import { BranchApiService } from '../../../core/services/branch-api.service';
 import { apiErrorMessage } from '../../../core/utils/api-error';
-import { BranchSelectComponent } from '../shared/branch-select.component';
+import { AppModalComponent } from '../../../shared/ui/app-modal.component';
 
 @Component({
   selector: 'app-products-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, BranchSelectComponent],
+  imports: [CommonModule, FormsModule, AppModalComponent],
   templateUrl: './products-page.component.html',
   styleUrls: ['../styles/crud-page.css', './products-page.component.scoped.css'],
 })
 export class ProductsPageComponent implements OnInit {
   private readonly productsApi = inject(ProductApiService);
   private readonly catalogApi = inject(CatalogApiService);
-  private readonly branchApi = inject(BranchApiService);
+  private readonly branchCtx = inject(DashboardBranchContextService);
 
   branchId: number | null = null;
+  addModalOpen = false;
   catalog: CatProduct[] = [];
   products: ProductRow[] = [];
 
@@ -37,21 +39,16 @@ export class ProductsPageComponent implements OnInit {
   error = '';
   okMsg = '';
 
+  constructor() {
+    toObservable(this.branchCtx.branchId)
+      .pipe(takeUntilDestroyed())
+      .subscribe((id) => this.onBranchChange(id));
+  }
+
   ngOnInit(): void {
     this.catalogApi.list('PRODUCTOS').subscribe({
       next: (c) => (this.catalog = c),
       error: (e) => (this.error = apiErrorMessage(e)),
-    });
-
-    this.branchApi.list().subscribe({
-      next: (branches) => {
-        if (branches.length > 0 && this.branchId == null) {
-          this.onBranchChange(branches[0].id);
-        }
-      },
-      error: (e) => {
-        this.error = this.error || apiErrorMessage(e);
-      },
     });
   }
 
@@ -94,6 +91,7 @@ export class ProductsPageComponent implements OnInit {
           this.formName = '';
           this.formCost = null;
           this.formCatId = null;
+          this.addModalOpen = false;
           this.saving = false;
           this.reloadProducts('Producto creado.');
         },

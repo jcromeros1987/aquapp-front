@@ -12,38 +12,148 @@
   <p class="alert alert-error" *ngIf="error">{{ error }}</p>
   <p class="alert alert-ok" *ngIf="okMsg">{{ okMsg }}</p>
 
-  <div class="toolbar">
-    <app-branch-select
-      [branchId]="branchId"
-      (branchIdChange)="onBranchChange($event)"
-      label="Sucursal"
-    />
-  </div>
+  <p class="branch-context-hint" *ngIf="branchId == null">
+    Elige una <strong>sucursal concreta</strong> en el menú lateral (debajo del logo) para ver y editar inventario.
+  </p>
 
   <ng-container *ngIf="branchId != null">
-    <h2 class="section-title">Nuevo renglón</h2>
     <div class="toolbar">
-      <div class="field">
-        <span class="field-label">Tipo (catálogo)</span>
-        <select [(ngModel)]="formCatId">
-          <option [ngValue]="null">—</option>
-          <option *ngFor="let c of availableTypes()" [ngValue]="c.id">{{ c.name }}</option>
-        </select>
-      </div>
-      <div class="field">
-        <span class="field-label">Cantidad</span>
-        <input type="number" min="0" step="1" [(ngModel)]="formQty" />
-      </div>
-      <div class="field field-wide">
-        <span class="field-label">Notas (opcional)</span>
-        <input type="text" [(ngModel)]="formObs" placeholder="Serie, ubicación…" />
-      </div>
-      <button type="button" class="btn btn-primary" (click)="create()" [disabled]="saving">
-        Agregar
-      </button>
+      <button type="button" class="btn btn-primary" (click)="addModalOpen = true">Nuevo renglón</button>
     </div>
 
+    <app-modal [(open)]="addModalOpen" title="Nuevo renglón de inventario" size="lg">
+      <div class="toolbar wrap">
+        <div class="field">
+          <span class="field-label">Tipo (catálogo)</span>
+          <select [(ngModel)]="formCatId">
+            <option [ngValue]="null">—</option>
+            <option *ngFor="let c of availableTypes()" [ngValue]="c.id">{{ c.name }}</option>
+          </select>
+        </div>
+        <div class="field">
+          <span class="field-label">Cantidad</span>
+          <input type="number" min="0" step="1" [(ngModel)]="formQty" />
+        </div>
+        <div class="field field-wide">
+          <span class="field-label">Notas (opcional)</span>
+          <input type="text" [(ngModel)]="formObs" placeholder="Serie, ubicación…" />
+        </div>
+        <button type="button" class="btn btn-primary" (click)="create()" [disabled]="saving">Agregar</button>
+      </div>
+    </app-modal>
+
     <h2 class="section-title">Existencias</h2>
+    <p class="tab-lead" *ngIf="catalog.length > 0">
+      Filtra por tipo de inventario (catálogo). El número en cada pestaña es el <strong>máximo</strong> entre la
+      <strong>cantidad del renglón</strong> y las <strong>piezas con código</strong> registradas, para alinearlo con lo
+      que realmente tienes en planta; el detalle por código aparece al elegir la pestaña.
+    </p>
+    <nav class="inventory-tabs" *ngIf="catalog.length > 0" aria-label="Tipo de inventario">
+      <button
+        type="button"
+        class="inventory-tab"
+        [class.inventory-tab--active]="inventoryTabCatId === null"
+        (click)="selectInventoryTab(null)"
+      >
+        Todos
+        <span class="inventory-tab-count">{{ totalPieceCountAll() }}</span>
+      </button>
+      <button
+        type="button"
+        *ngFor="let c of catalog"
+        class="inventory-tab"
+        [class.inventory-tab--active]="inventoryTabCatId === c.id"
+        (click)="selectInventoryTab(c.id)"
+      >
+        {{ c.name }}
+        <span class="inventory-tab-count">{{ pieceCountByCatalog(c.id) }}</span>
+      </button>
+    </nav>
+
+    <section
+      *ngIf="inventoryTabCatId != null"
+      class="tab-detail-section"
+      aria-label="Detalle por pieza del tipo seleccionado"
+    >
+      <h3 class="tab-detail-title">
+        Detalle por pieza — {{ selectedTabCatalog()?.name }}
+        <span class="tab-detail-count" *ngIf="!tabDetailLoading">({{ tabDetailUnits.length }} piezas)</span>
+      </h3>
+      <p class="units-help tab-detail-help" *ngIf="!tabDetailLoading && tabDetailUnits.length > 0">
+        Listado de todas las piezas con código de este tipo en la sucursal. Para generar códigos nuevos, en la tabla de
+        renglones abre <strong>Unidades por pieza</strong> y usa <strong>Crear unidades</strong>.
+      </p>
+      <p *ngIf="tabDetailLoading" class="units-loading">Cargando piezas…</p>
+      <p *ngIf="!tabDetailLoading && tabDetailUnits.length === 0" class="tab-empty-hint tab-detail-empty">
+        No hay piezas con código para este tipo. Si ya existe el renglón con cantidad, crea o sincroniza unidades desde
+        <strong>Unidades por pieza</strong> en la tabla inferior.
+      </p>
+      <div *ngIf="!tabDetailLoading && tabDetailUnits.length > 0" class="data-table-wrap tab-detail-table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Código</th>
+              <th>Renglón</th>
+              <th>Estado</th>
+              <th>Cliente</th>
+              <th>Asignación</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let u of tabDetailUnits">
+              <td><code class="clave-cell">{{ u.codigo }}</code></td>
+              <td><code class="clave-cell">{{ u.inventory?.clave || '—' }}</code></td>
+              <td>{{ statusLabel(u.status) }}</td>
+              <td>
+                <ng-container *ngIf="u.customer && (u.status === 'con_cliente' || u.status === 'en_disputa'); else pickCustomerTab">
+                  {{ customerName(u.customer) }}
+                </ng-container>
+                <ng-template #pickCustomerTab>
+                  <select [ngModel]="unitDraftCustomer(u.id)" (ngModelChange)="setUnitDraftCustomer(u.id, $event)">
+                    <option [ngValue]="null">— Cliente —</option>
+                    <option *ngFor="let c of customers" [ngValue]="c.id">{{ customerName(c) }}</option>
+                  </select>
+                </ng-template>
+              </td>
+              <td class="cell-dates">
+                <span *ngIf="u.assigned_at" class="date-bit">Salida: {{ u.assigned_at | date: 'short' }}</span>
+                <span *ngIf="u.returned_at" class="date-bit">Regreso: {{ u.returned_at | date: 'short' }}</span>
+              </td>
+              <td>
+                <div class="actions units-actions">
+                  <button
+                    type="button"
+                    class="btn btn-ghost"
+                    *ngIf="u.status === 'en_planta' || u.status === 'en_disputa'"
+                    (click)="assignUnit(u)"
+                  >
+                    Asignar cliente
+                  </button>
+                  <button type="button" class="btn btn-ghost" *ngIf="u.status === 'con_cliente'" (click)="returnUnit(u)">
+                    Devolución
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-ghost"
+                    *ngIf="u.status !== 'en_disputa' && u.status !== 'baja'"
+                    (click)="disputaUnit(u)"
+                  >
+                    Disputa
+                  </button>
+                  <button type="button" class="btn btn-ghost" *ngIf="u.status !== 'baja'" (click)="bajaUnit(u)">
+                    Baja
+                  </button>
+                  <button type="button" class="btn btn-danger" (click)="removeUnit(u)">Eliminar</button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <ng-container *ngIf="filteredItems().length > 0; else emptyFiltered">
     <div class="data-table-wrap">
       <table class="data-table">
         <thead>
@@ -57,7 +167,7 @@
           </tr>
         </thead>
         <tbody>
-          <ng-container *ngFor="let row of items">
+          <ng-container *ngFor="let row of filteredItems()">
             <tr *ngIf="editing?.id !== row.id">
               <td><code class="clave-cell">{{ row.clave || '—' }}</code></td>
               <td>{{ typeLabel(row) }}</td>
@@ -203,5 +313,15 @@
         </tbody>
       </table>
     </div>
+    </ng-container>
+    <ng-template #emptyFiltered>
+      <p class="tab-empty-hint" *ngIf="inventoryTabCatId != null && items.length > 0">
+        No hay renglones de este tipo en la sucursal. Puedes dar de alta uno en <strong>Nuevo renglón</strong> (si el
+        tipo aún no tiene renglón, aparecerá en el desplegable).
+      </p>
+      <p class="tab-empty-hint" *ngIf="items.length === 0">
+        Sin existencias en esta sucursal. Usa <strong>Nuevo renglón</strong> para crear el primero.
+      </p>
+    </ng-template>
   </ng-container>
 </div>

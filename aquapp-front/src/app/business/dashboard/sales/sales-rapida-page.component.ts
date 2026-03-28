@@ -1,10 +1,12 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
+import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { Customer, InventoryUnitRow, ProductRow, SaleRow } from '../../../core/models/api.models';
+import { DashboardBranchContextService } from '../../../core/services/dashboard-branch-context.service';
 import { ProductApiService } from '../../../core/services/product-api.service';
 import { SaleApiService } from '../../../core/services/sale-api.service';
-import { BranchApiService } from '../../../core/services/branch-api.service';
 import { CustomerApiService } from '../../../core/services/customer-api.service';
 import { InventoryUnitsApiService } from '../../../core/services/inventory-units-api.service';
 import {
@@ -12,34 +14,43 @@ import {
   DeliveryBatchToday,
 } from '../../../core/services/delivery-api.service';
 import { apiErrorMessage } from '../../../core/utils/api-error';
-import { BranchSelectComponent } from '../shared/branch-select.component';
+import { todayDateStringOperational } from '../../../core/utils/operational-date';
+import { AppModalComponent } from '../../../shared/ui/app-modal.component';
+import { GarrafonJugComponent } from './garrafon-jug.component';
+import { SalesVentaSubnavComponent } from './sales-venta-subnav.component';
 
 const CLIENT_SELECT_OTROS = -1;
 
 @Component({
-  selector: 'app-sales-page',
+  selector: 'app-sales-rapida-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, BranchSelectComponent],
-  templateUrl: './sales-page.component.html',
-  styleUrls: ['../styles/crud-page.css', './sales-page.component.scoped.css'],
+  imports: [
+    CommonModule,
+    FormsModule,
+    AppModalComponent,
+    GarrafonJugComponent,
+    SalesVentaSubnavComponent,
+    RouterLink,
+  ],
+  templateUrl: './sales-rapida-page.component.html',
+  styleUrls: ['../styles/crud-page.css', './sales-pages.scoped.css'],
 })
-export class SalesPageComponent implements OnInit {
+export class SalesRapidaPageComponent implements OnInit {
   private readonly salesApi = inject(SaleApiService);
   private readonly productsApi = inject(ProductApiService);
-  private readonly branchApi = inject(BranchApiService);
+  private readonly branchCtx = inject(DashboardBranchContextService);
   private readonly customerApi = inject(CustomerApiService);
   private readonly inventoryUnitsApi = inject(InventoryUnitsApiService);
   private readonly deliveryApi = inject(DeliveryApiService);
 
   branchId: number | null = null;
+  addSaleModalOpen = false;
   products: ProductRow[] = [];
   sales: SaleRow[] = [];
   customers: Customer[] = [];
-  /** Piezas aún en planta (para el repartidor). */
   availableUnits: InventoryUnitRow[] = [];
   deliveryTodayBatches: DeliveryBatchToday[] = [];
 
-  /** Repartidor: cliente y piezas marcadas. */
   readonly optionOtrosCliente = CLIENT_SELECT_OTROS;
   deliveryCustomerId: number | null = null;
   deliverySelectedIds: number[] = [];
@@ -66,24 +77,18 @@ export class SalesPageComponent implements OnInit {
   error = '';
   okMsg = '';
 
-  ngOnInit(): void {
-    const t = new Date();
-    this.formDate = t.toISOString().slice(0, 10);
+  constructor() {
+    toObservable(this.branchCtx.branchId)
+      .pipe(takeUntilDestroyed())
+      .subscribe((id) => this.onBranchChange(id));
+  }
 
-    this.branchApi.list().subscribe({
-      next: (branches) => {
-        if (branches.length > 0 && this.branchId == null) {
-          this.onBranchChange(branches[0].id);
-        }
-      },
-      error: (e) => {
-        this.error = this.error || apiErrorMessage(e);
-      },
-    });
+  ngOnInit(): void {
+    this.formDate = todayDateStringOperational();
   }
 
   get todayStr(): string {
-    return new Date().toISOString().slice(0, 10);
+    return todayDateStringOperational();
   }
 
   get salesToday(): SaleRow[] {
@@ -98,6 +103,20 @@ export class SalesPageComponent implements OnInit {
     return this.deliverySelectedIds.length;
   }
 
+  /** En planta: piezas que aún no van en esta entrega. */
+  get deliveryUnitsEnPlanta(): InventoryUnitRow[] {
+    const sel = new Set(this.deliverySelectedIds);
+    return this.availableUnits.filter((u) => !sel.has(u.id));
+  }
+
+  /** Piezas que lleva el repartidor en esta entrega (sale de la lista de disponibles). */
+  get deliveryUnitsConCliente(): InventoryUnitRow[] {
+    const byId = new Map(this.availableUnits.map((u) => [u.id, u]));
+    return this.deliverySelectedIds
+      .map((id) => byId.get(id))
+      .filter((u): u is InventoryUnitRow => u != null);
+  }
+
   onBranchChange(id: number | null): void {
     this.branchId = id;
     this.error = '';
@@ -108,6 +127,7 @@ export class SalesPageComponent implements OnInit {
     this.availableUnits = [];
     this.deliveryTodayBatches = [];
     this.formProductId = null;
+    this.formDate = todayDateStringOperational();
     this.resetDeliveryForm();
     this.cancelEdit();
     if (this.branchId == null) return;
@@ -161,10 +181,6 @@ export class SalesPageComponent implements OnInit {
     }
   }
 
-  isDeliveryUnitSelected(id: number): boolean {
-    return this.deliverySelectedIds.includes(id);
-  }
-
   toggleDeliveryUnit(id: number): void {
     const i = this.deliverySelectedIds.indexOf(id);
     if (i >= 0) {
@@ -192,6 +208,7 @@ export class SalesPageComponent implements OnInit {
         num_ext: 's/n',
         num_int: 's/n',
         description,
+        delivery_route_ids: [],
       })
       .subscribe({
         next: (c) => {
@@ -236,7 +253,7 @@ export class SalesPageComponent implements OnInit {
           this.deliverySelectedIds = [];
           this.savingDelivery = false;
           this.reloadDeliveryContext();
-          this.okMsg = 'Entrega guardada: piezas asignadas al cliente.';
+          this.reloadSales('Entrega guardada. Ya figura en ventas de hoy.');
         },
         error: (e) => {
           this.error = apiErrorMessage(e);
@@ -250,8 +267,21 @@ export class SalesPageComponent implements OnInit {
     return `${u.codigo} · ${line}`;
   }
 
+  /** Etiqueta corta para UI (ej. INV-B1-00003-U005 → U005). */
+  unitGarrafonShortLabel(u: InventoryUnitRow): string {
+    const c = (u.codigo || '').trim();
+    if (!c) {
+      return '—';
+    }
+    const parts = c.split('-').filter(Boolean);
+    if (parts.length >= 2) {
+      return parts[parts.length - 1]!;
+    }
+    return c;
+  }
+
   batchUnitsLabel(batch: DeliveryBatchToday): string {
-    return batch.units.map((u) => u.codigo).join(', ');
+    return batch.units.map((u) => this.unitGarrafonShortLabel(u)).join(', ');
   }
 
   onProductPicked(): void {
@@ -302,7 +332,9 @@ export class SalesPageComponent implements OnInit {
           this.formObs = '';
           this.formQty = 1;
           this.recalcTotal();
+          this.addSaleModalOpen = false;
           this.saving = false;
+          this.formDate = this.todayStr;
           this.reloadSales('Venta registrada.');
         },
         error: (e) => {
@@ -367,14 +399,4 @@ export class SalesPageComponent implements OnInit {
       error: (e) => (this.error = apiErrorMessage(e)),
     });
   }
-
-  get totalVendido(): number {
-    return this.sales.reduce((sum, s) => sum + Number(s.total_amount), 0);
-  }
 }
-
-</think>
-
-
-<｜tool▁calls▁begin｜><｜tool▁call▁begin｜>
-Read

@@ -1,0 +1,17 @@
+<div *ngIf="open" class="app-modal-backdrop" (click)="onBackdropClick($event)" role="presentation">
+  <div
+    role="dialog"
+    aria-modal="true"
+    [attr.aria-labelledby]="titleId"
+    [ngClass]="panelClass()"
+    (click)="$event.stopPropagation()"
+  >
+    <header class="app-modal-head">
+      <h2 [id]="titleId" class="app-modal-title">{{ title }}</h2>
+      <button type="button" class="app-modal-close" (click)="close()" aria-label="Cerrar">×</button>
+    </header>
+    <div class="app-modal-body">
+      <ng-content />
+    </div>
+  </div>
+</div>

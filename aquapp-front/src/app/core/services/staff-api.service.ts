@@ -15,6 +15,8 @@ export interface StaffRegisterPayload {
   birthday: string;
   role: StaffRole;
   branch_id: number;
+  /** Rutas de distribución donde reparte (recomendado si rol es Reparto). */
+  delivery_route_ids?: number[];
 }
 
 @Injectable({ providedIn: 'root' })
@@ -37,7 +39,12 @@ export class StaffApiService {
 
   update(
     id: number,
-    body: { name?: string; email?: string; password?: string },
+    body: {
+      name?: string;
+      email?: string;
+      password?: string;
+      delivery_route_ids?: number[];
+    },
   ): Observable<StaffUser> {
     return this.http
       .put<{ data?: StaffUser }>(ApiEndpoints.staff.one(id), body)

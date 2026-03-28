@@ -1,1 +1,60 @@
 /* You can add global styles to this file, and also import other style files */
+@import 'leaflet/dist/leaflet.css';
+
+/* Zona: marcadores Leaflet (HTML insertado fuera del Shadow/encapsulado del componente). */
+.leaflet-container .zona-leaflet-pin-wrap {
+  background: transparent;
+  border: none;
+}
+
+.leaflet-container .zona-leaflet-pin {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  width: 22px;
+  height: 28px;
+  cursor: pointer;
+}
+
+.leaflet-container .zona-leaflet-pin-dot {
+  display: block;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  background: linear-gradient(145deg, #ef4444, #b91c1c);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+  border: 2px solid #fff;
+}
+
+.leaflet-container .zona-leaflet-pin--active .zona-leaflet-pin-dot {
+  background: linear-gradient(145deg, #7c3aed, #5b21b6);
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.45);
+}
+
+/* Recorrido: marcadores numerados en Leaflet */
+.leaflet-container .recorrido-pin-wrap {
+  background: transparent;
+  border: none;
+}
+
+.leaflet-container .recorrido-pin {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.65rem;
+  height: 1.65rem;
+  padding: 0 0.25rem;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #eef2ff, #c7d2fe);
+  border: 2px solid #4f46e5;
+  box-shadow: 0 2px 6px rgba(79, 70, 229, 0.35);
+}
+
+.leaflet-container .recorrido-pin-num {
+  font-size: 0.78rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: #312e81;
+  line-height: 1;
+}

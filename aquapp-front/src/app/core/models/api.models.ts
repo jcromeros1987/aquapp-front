@@ -1,6 +1,9 @@
 export interface Branch {
   id: number;
   name: string;
+  /** GPS sucursal (mapa Zona, purificadora en mapa). */
+  latitude?: number | string | null;
+  longitude?: number | string | null;
 }
 
 /** Clasificación en `cat_products`. */
@@ -52,12 +55,23 @@ export interface InventoryUnitRow {
   inventory?: Pick<InventoryRow, 'id' | 'clave' | 'cat_product'>;
 }
 
-/** Ruta de reparto (catálogo `delivery_routes`). */
+/** Ruta de distribución (catálogo `delivery_routes`). */
 export interface DeliveryRoute {
   id: number;
   name: string;
   sort_order: number;
 }
+
+/** Enlace cliente ↔ ruta (pivote con orden de parada). */
+export type CustomerDeliveryRouteLink = DeliveryRoute & {
+  pivot?: {
+    stop_order: number;
+    customer_id: number;
+    delivery_route_id: number;
+    created_at?: string;
+    updated_at?: string;
+  };
+};
 
 export interface Customer {
   id: number;
@@ -66,8 +80,26 @@ export interface Customer {
   num_ext: string;
   num_int: string;
   description: string;
-  delivery_route_id?: number | null;
-  delivery_route?: DeliveryRoute;
+  latitude?: number | null;
+  longitude?: number | null;
+  /** Varias rutas posibles (pivote). */
+  delivery_routes?: CustomerDeliveryRouteLink[];
+}
+
+/** Cliente en el listado de una ruta (incluye pivot.stop_order). */
+export type CustomerRouteStop = Customer & {
+  pivot?: {
+    stop_order: number;
+    customer_id: number;
+    delivery_route_id: number;
+    created_at?: string;
+    updated_at?: string;
+  };
+};
+
+/** Ruta con clientes ya ordenados por parada (API `with-customers`). */
+export interface DeliveryRouteWithStops extends DeliveryRoute {
+  customers: CustomerRouteStop[];
 }
 
 export interface StaffRoleRef {
@@ -84,6 +116,58 @@ export interface StaffUser {
   birthday?: string;
   roles?: StaffRoleRef[];
   branches?: Branch[];
+  /** Rutas de distribución asignadas (repartidor u otros). */
+  delivery_routes?: DeliveryRoute[];
+}
+
+/** Tipo de gasto de servicio / mantenimiento (tabla service_expense_types). */
+export interface ServiceExpenseTypeRow {
+  id: number;
+  name: string;
+  sort_order: number;
+}
+
+/** Pago por servicio (mantenimiento, limpieza, etc.); suma a gastos en inicio y balance. */
+export interface ServiceExpenseRow {
+  id: number;
+  branch_id: number;
+  service_expense_type_id: number;
+  amount: string | number;
+  pay_date: string;
+  notes: string | null;
+  recorded_by_user_id: number | null;
+  created_at?: string | null;
+  service_expense_type?: Pick<ServiceExpenseTypeRow, 'id' | 'name'>;
+  branch?: Pick<Branch, 'id' | 'name'>;
+}
+
+/** Pago registrado por rubro de insumo (suma a «gastos» en la gráfica del inicio). */
+export interface InsumoExpenseRow {
+  id: number;
+  branch_id: number;
+  cat_product_id: number;
+  amount: string | number;
+  pay_date: string;
+  notes: string | null;
+  recorded_by_user_id: number | null;
+  created_at?: string | null;
+  cat_product?: Pick<CatProduct, 'id' | 'name' | 'catalog_kind'>;
+  branch?: Pick<Branch, 'id' | 'name'>;
+}
+
+/** Pago de sueldo a repartidor (suma a «gastos» en la gráfica de inicio). */
+export interface PayrollExpenseRow {
+  id: number;
+  branch_id: number;
+  user_id: number;
+  amount: string | number;
+  pay_date: string;
+  pay_schedule_note: string | null;
+  notes: string | null;
+  recorded_by_user_id: number | null;
+  created_at?: string | null;
+  user?: Pick<StaffUser, 'id' | 'name' | 'email'>;
+  branch?: Pick<Branch, 'id' | 'name'>;
 }
 
 export interface SaleRow {
@@ -94,6 +178,8 @@ export interface SaleRow {
   /** Cliente de purificadora (`customers`), p. ej. entrega de garrafón. */
   customer_id?: number | null;
   inventory_unit_id?: number | null;
+  /** Hora de alta en servidor (ISO); útil para venta en sucursal. */
+  created_at?: string | null;
   date: string;
   cost: string | number;
   quantity: number;

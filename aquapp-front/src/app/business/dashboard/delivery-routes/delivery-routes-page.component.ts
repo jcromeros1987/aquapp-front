@@ -2,13 +2,14 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DeliveryRoute } from '../../../core/models/api.models';
+import { AppModalComponent } from '../../../shared/ui/app-modal.component';
 import { DeliveryRoutesApiService } from '../../../core/services/delivery-routes-api.service';
 import { apiErrorMessage } from '../../../core/utils/api-error';
 
 @Component({
   selector: 'app-delivery-routes-page',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AppModalComponent],
   templateUrl: './delivery-routes-page.component.html',
   styleUrls: ['../styles/crud-page.css', './delivery-routes-page.component.scoped.css'],
 })
@@ -17,6 +18,7 @@ export class DeliveryRoutesPageComponent implements OnInit {
 
   routes: DeliveryRoute[] = [];
 
+  addRouteModalOpen = false;
   newRouteName = '';
   newRouteOrder = 0;
   savingRoute = false;
@@ -56,6 +58,7 @@ export class DeliveryRoutesPageComponent implements OnInit {
         next: () => {
           this.newRouteName = '';
           this.newRouteOrder = 0;
+          this.addRouteModalOpen = false;
           this.savingRoute = false;
           this.reload('Ruta agregada.');
         },

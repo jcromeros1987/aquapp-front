@@ -1,0 +1,59 @@
+.breadcrumb {
+  margin: 0 0 0.75rem;
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
+.breadcrumb .sep {
+  margin: 0 0.35rem;
+}
+
+.form-panel {
+  margin-bottom: 1.5rem;
+  padding: 1rem 1.15rem;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+  gap: 0.85rem 1rem;
+  align-items: end;
+}
+
+.field.full {
+  grid-column: 1 / -1;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.hint-muted {
+  color: #6b7280;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.hint-muted a {
+  color: #4f46e5;
+  font-weight: 600;
+}
+
+.cell-notes {
+  max-width: 14rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.edit-hint {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: 0.9rem;
+  color: #374151;
+}

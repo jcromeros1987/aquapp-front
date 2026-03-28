@@ -2,13 +2,14 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CatProduct } from '../../../core/models/api.models';
+import { AppModalComponent } from '../../../shared/ui/app-modal.component';
 import { CatalogApiService } from '../../../core/services/catalog-api.service';
 import { apiErrorMessage } from '../../../core/utils/api-error';
 
 @Component({
   selector: 'app-inventario-catalogo-page',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AppModalComponent],
   templateUrl: './inventario-catalogo-page.component.html',
   styleUrls: ['../styles/crud-page.css', './inventario-catalogo-page.component.scoped.css'],
 })
@@ -16,6 +17,7 @@ export class InventarioCatalogoPageComponent implements OnInit {
   private readonly api = inject(CatalogApiService);
 
   rows: CatProduct[] = [];
+  addModalOpen = false;
   newName = '';
   editing: CatProduct | null = null;
   editName = '';
@@ -43,6 +45,7 @@ export class InventarioCatalogoPageComponent implements OnInit {
     this.api.create(name, 'INVENTARIO').subscribe({
       next: () => {
         this.newName = '';
+        this.addModalOpen = false;
         this.saving = false;
         this.reload('Tipo de inventario creado.');
       },

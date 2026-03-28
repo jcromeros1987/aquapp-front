@@ -1,25 +1,35 @@
 <div class="page-card">
   <h1>Mis purificadoras</h1>
-  <p class="subtitle">Alta, edición y baja de sucursales vinculadas a tu cuenta.</p>
+  <p class="subtitle">
+    Alta, edición y baja de sucursales. Las coordenadas <strong>GPS</strong> (latitud / longitud) sirven para el
+    mapa de zona y referencias; puedes editarlas al pulsar Editar.
+  </p>
 
   <p class="alert alert-error" *ngIf="error">{{ error }}</p>
   <p class="alert alert-ok" *ngIf="okMsg">{{ okMsg }}</p>
 
   <div class="toolbar">
-    <div class="field">
-      <span class="field-label">Nueva sucursal</span>
-      <input type="text" [(ngModel)]="newName" placeholder="Nombre" />
-    </div>
-    <button type="button" class="btn btn-primary" (click)="create()" [disabled]="saving">
-      Crear
-    </button>
+    <button type="button" class="btn btn-primary" (click)="addModalOpen = true">Nueva sucursal</button>
   </div>
+
+  <app-modal [(open)]="addModalOpen" title="Nueva sucursal" size="md">
+    <div class="toolbar">
+      <div class="field">
+        <span class="field-label">Nombre</span>
+        <input type="text" [(ngModel)]="newName" placeholder="Nombre de la purificadora" />
+      </div>
+      <button type="button" class="btn btn-primary" (click)="create()" [disabled]="saving">Crear</button>
+    </div>
+  </app-modal>
 
   <div class="data-table-wrap">
     <table class="data-table">
       <thead>
         <tr>
           <th>Nombre</th>
+          <th>Latitud</th>
+          <th>Longitud</th>
+          <th>Mapa</th>
           <th></th>
         </tr>
       </thead>
@@ -31,6 +41,46 @@
               <input type="text" [(ngModel)]="editName" />
             </div>
           </td>
+          <td *ngIf="editing?.id !== b.id" class="cell-gps">
+            <span *ngIf="branchCoord(b.latitude) === null">—</span>
+            <span *ngIf="branchCoord(b.latitude) !== null">{{ branchCoord(b.latitude)! | number : '1.5-7' }}</span>
+          </td>
+          <td *ngIf="editing?.id !== b.id" class="cell-gps">
+            <span *ngIf="branchCoord(b.longitude) === null">—</span>
+            <span *ngIf="branchCoord(b.longitude) !== null">{{ branchCoord(b.longitude)! | number : '1.5-7' }}</span>
+          </td>
+          <td *ngIf="editing?.id !== b.id">
+            <a
+              *ngIf="osmMapUrl(b) as mapUrl"
+              class="link-osm"
+              [href]="mapUrl"
+              target="_blank"
+              rel="noopener noreferrer"
+              >OpenStreetMap</a
+            >
+            <span *ngIf="!osmMapUrl(b)" class="muted">—</span>
+          </td>
+          <td *ngIf="editing?.id === b.id">
+            <input
+              class="input-coord"
+              type="text"
+              inputmode="decimal"
+              [(ngModel)]="editLatStr"
+              placeholder="Ej. 19.185737"
+              aria-label="Latitud"
+            />
+          </td>
+          <td *ngIf="editing?.id === b.id">
+            <input
+              class="input-coord"
+              type="text"
+              inputmode="decimal"
+              [(ngModel)]="editLngStr"
+              placeholder="Ej. -97.80749"
+              aria-label="Longitud"
+            />
+          </td>
+          <td *ngIf="editing?.id === b.id"><span class="muted">—</span></td>
           <td>
             <div class="actions" *ngIf="editing?.id !== b.id">
               <button type="button" class="btn btn-ghost" (click)="startEdit(b)">Editar</button>

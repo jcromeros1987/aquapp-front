@@ -1,0 +1,24 @@
+<div class="page-card">
+  <h1>Catálogos</h1>
+  <p class="subtitle">
+    Accesos rápidos a los catálogos del sistema. Desde aquí puedes abrir la
+    <strong>gestión de rutas de distribución</strong> y el resto de listas maestras bajo el menú
+    <strong>Catálogos</strong>.
+  </p>
+
+  <ul class="catalog-grid">
+    @for (item of links; track item.route) {
+      <li>
+        <a
+          [routerLink]="['/dashboard', item.route]"
+          class="catalog-card"
+          [class.catalog-card--highlight]="item.highlight"
+        >
+          <span class="catalog-card-title">{{ item.title }}</span>
+          <span class="catalog-card-desc">{{ item.description }}</span>
+          <span class="catalog-card-cta">Abrir →</span>
+        </a>
+      </li>
+    }
+  </ul>
+</div>
