@@ -5,7 +5,8 @@
     <a routerLink="/dashboard/gastos/sueldos">sueldos</a> e
     <a routerLink="/dashboard/gastos/insumos">insumos</a>,
     <a routerLink="/dashboard/gastos/servicios">servicios</a>. Semana, mes o año calendario; zona horaria
-    México. Si el selector lateral está en <strong>todas las sucursales</strong>, se suman todas las tuyas.
+    México. Si en <a routerLink="/dashboard/perfil">Perfil</a> eliges
+    <strong>todas las sucursales</strong>, se suman todas las tuyas.
   </p>
 
   <nav class="period-tabs" aria-label="Periodo">
@@ -23,7 +24,8 @@
 
   @if (branchCtx.branchId() === null) {
     <p class="branch-context-hint">
-      Mostrando total de <strong>todas tus sucursales</strong>. Elige una sucursal en el menú lateral para filtrar.
+      Mostrando total de <strong>todas tus sucursales</strong>. Elige una sucursal en
+      <a routerLink="/dashboard/perfil">Perfil</a> para filtrar.
     </p>
   }
 

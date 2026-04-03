@@ -6,7 +6,8 @@
   <p class="alert alert-ok" *ngIf="okMsg">{{ okMsg }}</p>
 
   <p class="branch-context-hint" *ngIf="branchId == null">
-    Elige una <strong>sucursal concreta</strong> en el menú lateral (debajo del logo) para ver y editar productos.
+    Elige una <strong>sucursal concreta</strong> en <a routerLink="/dashboard/perfil">Perfil</a> para ver y editar
+    productos.
   </p>
 
   <ng-container *ngIf="branchId != null">

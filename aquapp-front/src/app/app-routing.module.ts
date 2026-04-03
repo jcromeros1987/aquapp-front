@@ -19,6 +19,7 @@ import { CustomersPageComponent } from './business/dashboard/customers/customers
 import { StaffPageComponent } from './business/dashboard/staff/staff-page.component';
 import { ZonaPageComponent } from './business/dashboard/zona/zona-page.component';
 import { SalesVentaShellComponent } from './business/dashboard/sales/sales-venta-shell.component';
+import { SalesIngresosShellComponent } from './business/dashboard/sales/sales-ingresos-shell.component';
 import { SalesRegistroDiarioPageComponent } from './business/dashboard/sales/sales-registro-diario-page.component';
 import { SalesRapidaPageComponent } from './business/dashboard/sales/sales-rapida-page.component';
 import { SalesSucursalPageComponent } from './business/dashboard/sales/sales-sucursal-page.component';
@@ -82,17 +83,31 @@ const routes: Routes = [
       { path: 'zona', component: ZonaPageComponent },
       { path: 'personal', component: StaffPageComponent },
       {
+        path: 'ingresos',
+        component: SalesIngresosShellComponent,
+        children: [
+          { path: '', pathMatch: 'full', redirectTo: 'registro-diario' },
+          { path: 'registro-diario', component: SalesRegistroDiarioPageComponent },
+          { path: 'historial', component: SalesHistorialPageComponent },
+        ],
+      },
+      {
         path: 'venta',
         component: SalesVentaShellComponent,
         children: [
           { path: '', pathMatch: 'full', redirectTo: 'rapida' },
-          {
-            path: 'registro-diario',
-            component: SalesRegistroDiarioPageComponent,
-          },
           { path: 'rapida', component: SalesRapidaPageComponent },
           { path: 'sucursal', component: SalesSucursalPageComponent },
-          { path: 'historial', component: SalesHistorialPageComponent },
+          {
+            path: 'registro-diario',
+            redirectTo: '/dashboard/ingresos/registro-diario',
+            pathMatch: 'full',
+          },
+          {
+            path: 'historial',
+            redirectTo: '/dashboard/ingresos/historial',
+            pathMatch: 'full',
+          },
         ],
       },
       { path: 'perfil', component: ProfilePageComponent },

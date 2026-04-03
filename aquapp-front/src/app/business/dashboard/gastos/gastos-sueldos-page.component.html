@@ -16,7 +16,7 @@
   <p class="alert alert-ok" *ngIf="okMsg">{{ okMsg }}</p>
 
   <p class="branch-context-hint" *ngIf="branchId == null">
-    Elige una <strong>sucursal</strong> en el menú lateral para gestionar pagos.
+    Elige una <strong>sucursal</strong> en <a routerLink="/dashboard/perfil">Perfil</a> para gestionar pagos.
   </p>
 
   <ng-container *ngIf="branchId != null">
@@ -58,7 +58,8 @@
         <p class="hint-muted" *ngIf="staff.length === 0">
           No hay personal listado para esta sucursal en
           <a routerLink="/dashboard/personal">Personal</a> (solo cuentan roles gestor, asistente o
-          <strong>repartidor</strong>). Si eliges otra sucursal en el menú lateral, puede haber personal allí.
+          <strong>repartidor</strong>). Si eliges otra sucursal en
+          <a routerLink="/dashboard/perfil">Perfil</a>, puede haber personal allí.
         </p>
         <p class="hint-muted" *ngIf="staff.length > 0">
           Hay {{ staff.length }} persona(s) en esta sucursal, pero <strong>ninguna con rol repartidor</strong>

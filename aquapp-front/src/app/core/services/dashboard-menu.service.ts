@@ -26,8 +26,9 @@ import {
  * v26: Balance (ingresos vs gastos por periodo), ruta balance.
  * v27: Orden raíz Inicio → Ventas → Gastos → Balance; re-migra desde v26.
  * v28: Gastos como grupo (Sueldos, Insumos, Servicios, Suministros); re-migra desde v27.
+ * v29: Grupo «Ingresos» (Registro diario + Historial); rutas bajo ingresos/…; «Ventas» solo domicilio y sucursal.
  */
-const STORAGE_KEY = 'aquapp_dashboard_menu_v28';
+const STORAGE_KEY = 'aquapp_dashboard_menu_v29';
 
 export const DEFAULT_DASHBOARD_MENU: MenuItemRecord[] = [
   {
@@ -58,17 +59,8 @@ export const DEFAULT_DASHBOARD_MENU: MenuItemRecord[] = [
     enabled: true,
   },
   {
-    id: 'm2a',
-    order: 1,
-    label: 'Registro diario',
-    route: 'venta/registro-diario',
-    icon: '📋',
-    parentId: 'm2',
-    enabled: true,
-  },
-  {
     id: 'm2d',
-    order: 2,
+    order: 1,
     label: 'Venta en sucursal',
     route: 'venta/sucursal',
     icon: '🏪',
@@ -76,17 +68,35 @@ export const DEFAULT_DASHBOARD_MENU: MenuItemRecord[] = [
     enabled: true,
   },
   {
+    id: 'm27',
+    order: 2,
+    label: 'Ingresos',
+    route: '',
+    icon: '💵',
+    parentId: null,
+    enabled: true,
+  },
+  {
+    id: 'm2a',
+    order: 0,
+    label: 'Registro diario',
+    route: 'ingresos/registro-diario',
+    icon: '📋',
+    parentId: 'm27',
+    enabled: true,
+  },
+  {
     id: 'm2c',
-    order: 3,
+    order: 1,
     label: 'Historial de ventas',
-    route: 'venta/historial',
+    route: 'ingresos/historial',
     icon: '📜',
-    parentId: 'm2',
+    parentId: 'm27',
     enabled: true,
   },
   {
     id: 'm24',
-    order: 2,
+    order: 3,
     label: 'Gastos',
     route: '',
     icon: '💰',
@@ -131,7 +141,7 @@ export const DEFAULT_DASHBOARD_MENU: MenuItemRecord[] = [
   },
   {
     id: 'm25',
-    order: 3,
+    order: 4,
     label: 'Balance',
     route: 'balance',
     icon: '📊',
@@ -140,7 +150,7 @@ export const DEFAULT_DASHBOARD_MENU: MenuItemRecord[] = [
   },
   {
     id: 'm22',
-    order: 4,
+    order: 5,
     label: 'Recorrido',
     route: 'recorrido',
     icon: '🛵',
@@ -149,7 +159,7 @@ export const DEFAULT_DASHBOARD_MENU: MenuItemRecord[] = [
   },
   {
     id: 'm11',
-    order: 5,
+    order: 6,
     label: 'Catálogos',
     route: 'catalogos',
     icon: '📚',
@@ -203,7 +213,7 @@ export const DEFAULT_DASHBOARD_MENU: MenuItemRecord[] = [
   },
   {
     id: 'm4',
-    order: 6,
+    order: 7,
     label: 'Productos',
     route: 'productos',
     icon: '📦',
@@ -212,7 +222,7 @@ export const DEFAULT_DASHBOARD_MENU: MenuItemRecord[] = [
   },
   {
     id: 'm15',
-    order: 7,
+    order: 8,
     label: 'Inventario',
     route: 'inventario',
     icon: '📋',
@@ -221,7 +231,7 @@ export const DEFAULT_DASHBOARD_MENU: MenuItemRecord[] = [
   },
   {
     id: 'm5',
-    order: 8,
+    order: 9,
     label: 'Clientes',
     route: 'clientes',
     icon: '👤',
@@ -230,7 +240,7 @@ export const DEFAULT_DASHBOARD_MENU: MenuItemRecord[] = [
   },
   {
     id: 'm19',
-    order: 9,
+    order: 10,
     label: 'Zona',
     route: 'zona',
     icon: '📍',
@@ -239,7 +249,7 @@ export const DEFAULT_DASHBOARD_MENU: MenuItemRecord[] = [
   },
   {
     id: 'm6',
-    order: 10,
+    order: 11,
     label: 'Personal',
     route: 'personal',
     icon: '👥',
@@ -248,7 +258,7 @@ export const DEFAULT_DASHBOARD_MENU: MenuItemRecord[] = [
   },
   {
     id: 'm7',
-    order: 11,
+    order: 12,
     label: 'Configuración',
     route: '',
     icon: '⚙️',
@@ -275,7 +285,7 @@ export const DEFAULT_DASHBOARD_MENU: MenuItemRecord[] = [
   },
   {
     id: 'm9',
-    order: 12,
+    order: 13,
     label: 'Perfil',
     route: 'perfil',
     icon: '✏️',
@@ -314,6 +324,17 @@ export class DashboardMenuService {
             }
           } catch {
             /* continuar con otras claves */
+          }
+        }
+      }
+      if (!raw) {
+        const v28 = localStorage.getItem('aquapp_dashboard_menu_v28');
+        if (v28) {
+          raw = v28;
+          try {
+            localStorage.setItem(STORAGE_KEY, v28);
+          } catch {
+            /* quota / privado */
           }
         }
       }
@@ -489,6 +510,7 @@ export class DashboardMenuService {
       merged = this.ensureBalanceMenuItem(merged, defaults);
       merged = this.ensureGastosMenuItem(merged, defaults);
       merged = this.ensureVentasMenuItems(merged, defaults);
+      merged = this.ensureIngresosMenuItems(merged, defaults);
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
       } catch {
@@ -526,12 +548,13 @@ export class DashboardMenuService {
         route: d.route,
         label: s.label?.trim() ? s.label : d.label,
         order: typeof s.order === 'number' ? s.order : d.order,
-        // Rutas bajo catálogos (m16), Zona (m19), ventas (m2a–m2d) y gastos (m24 y subítems) deben seguir visibles aunque se hubieran desactivado antes.
+        // Rutas bajo catálogos (m16), Zona (m19), ingresos/ventas (m27,m2a–m2d) y gastos (m24 y subítems) deben seguir visibles aunque se hubieran desactivado antes.
         enabled:
           d.id === 'm16' ||
           d.id === 'm19' ||
           d.id === 'm22' ||
           d.id === 'm25' ||
+          d.id === 'm27' ||
           d.id === 'm2a' ||
           d.id === 'm2b' ||
           d.id === 'm2c' ||
@@ -597,26 +620,18 @@ export class DashboardMenuService {
     defaults: MenuItemRecord[],
   ): MenuItemRecord[] {
     const m2def = defaults.find((r) => r.id === 'm2');
-    const m2adef = defaults.find((r) => r.id === 'm2a');
     const m2bdef = defaults.find((r) => r.id === 'm2b');
     const m2ddef = defaults.find((r) => r.id === 'm2d');
-    const m2cdef = defaults.find((r) => r.id === 'm2c');
     let out = menu;
     const byId = new Map(out.map((r) => [r.id, r]));
     if (m2def && !byId.has('m2')) {
       out = [...out, { ...m2def }];
-    }
-    if (m2adef && !byId.has('m2a')) {
-      out = [...out, { ...m2adef }];
     }
     if (m2bdef && !byId.has('m2b')) {
       out = [...out, { ...m2bdef }];
     }
     if (m2ddef && !byId.has('m2d')) {
       out = [...out, { ...m2ddef }];
-    }
-    if (m2cdef && !byId.has('m2c')) {
-      out = [...out, { ...m2cdef }];
     }
     return out.map((row) => {
       if (row.id === 'm2' && m2def) {
@@ -626,17 +641,6 @@ export class DashboardMenuService {
           parentId: null,
           route: '',
           label: row.label?.trim() ? row.label : m2def.label,
-        };
-      }
-      if (row.id === 'm2a' && m2adef) {
-        return {
-          ...row,
-          ...m2adef,
-          parentId: 'm2',
-          route: 'venta/registro-diario',
-          order: m2adef.order,
-          enabled: true,
-          label: row.label?.trim() ? row.label : m2adef.label,
         };
       }
       if (row.id === 'm2b' && m2bdef) {
@@ -663,12 +667,60 @@ export class DashboardMenuService {
           label: row.label?.trim() ? row.label : m2ddef.label,
         };
       }
-      if (row.id === 'm2c' && m2cdef) {
+      return row;
+    });
+  }
+
+  /** Grupo Ingresos (m27): registro diario e historial bajo ingresos/…. */
+  private ensureIngresosMenuItems(
+    menu: MenuItemRecord[],
+    defaults: MenuItemRecord[],
+  ): MenuItemRecord[] {
+    const m27def = defaults.find((r) => r.id === 'm27');
+    const m2adef = defaults.find((r) => r.id === 'm2a');
+    const m2cdef = defaults.find((r) => r.id === 'm2c');
+    if (!m27def || !m2adef || !m2cdef) {
+      return menu;
+    }
+    let out = menu;
+    const byId = new Map(out.map((r) => [r.id, r]));
+    if (!byId.has('m27')) {
+      out = [...out, { ...m27def }];
+    }
+    if (!byId.has('m2a')) {
+      out = [...out, { ...m2adef }];
+    }
+    if (!byId.has('m2c')) {
+      out = [...out, { ...m2cdef }];
+    }
+    return out.map((row) => {
+      if (row.id === 'm27') {
+        return {
+          ...row,
+          ...m27def,
+          parentId: null,
+          route: '',
+          enabled: true,
+          label: row.label?.trim() ? row.label : m27def.label,
+        };
+      }
+      if (row.id === 'm2a') {
+        return {
+          ...row,
+          ...m2adef,
+          parentId: 'm27',
+          route: 'ingresos/registro-diario',
+          order: m2adef.order,
+          enabled: true,
+          label: row.label?.trim() ? row.label : m2adef.label,
+        };
+      }
+      if (row.id === 'm2c') {
         return {
           ...row,
           ...m2cdef,
-          parentId: 'm2',
-          route: 'venta/historial',
+          parentId: 'm27',
+          route: 'ingresos/historial',
           order: m2cdef.order,
           enabled: true,
           label: row.label?.trim() ? row.label : m2cdef.label,
@@ -852,6 +904,7 @@ export class DashboardMenuService {
     merged = this.ensureBalanceMenuItem(merged, defaults);
     merged = this.ensureGastosMenuItem(merged, defaults);
     merged = this.ensureVentasMenuItems(merged, defaults);
+    merged = this.ensureIngresosMenuItems(merged, defaults);
     const normalized = this.normalizeOrders(merged);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
     this._items.set(normalized);
@@ -873,6 +926,45 @@ export class DashboardMenuService {
   routerLinkSegments(route: string): string[] {
     if (!route) return [];
     return route.split('/').filter(Boolean);
+  }
+
+  /** Parte de la URL bajo `/dashboard` (sin query, fragmento ni barra final). */
+  dashboardRoutePath(url: string): string {
+    const path = url.split('?')[0].split('#')[0];
+    const trimmed = path.replace(/\/+$/, '') || '/';
+    const prefix = '/dashboard';
+    if (!trimmed.startsWith(prefix)) {
+      return '';
+    }
+    return trimmed.slice(prefix.length).replace(/^\//, '');
+  }
+
+  /**
+   * IDs de nodos agrupadores que deben mostrarse expandidos para el ítem activo
+   * (ej. grupo «Ingresos» al entrar a `/dashboard/ingresos/historial`).
+   */
+  groupIdsToExpandForDashboardUrl(url: string): string[] {
+    const rel = this.dashboardRoutePath(url);
+    if (!rel) return [];
+    const found = new Set<string>();
+    const walk = (nodes: MenuTreeNode[], parentChain: string[]) => {
+      for (const n of nodes) {
+        if (n.children.length > 0) {
+          walk(n.children, [...parentChain, n.id]);
+          continue;
+        }
+        const r = (n.route || '').trim();
+        if (!r) continue;
+        const segs = this.routerLinkSegments(r).join('/');
+        if (rel === segs || rel.startsWith(segs + '/')) {
+          for (const id of parentChain) {
+            found.add(id);
+          }
+        }
+      }
+    };
+    walk(this.tree(), []);
+    return [...found];
   }
 
   private normalizeOrders(rows: MenuItemRecord[]): MenuItemRecord[] {

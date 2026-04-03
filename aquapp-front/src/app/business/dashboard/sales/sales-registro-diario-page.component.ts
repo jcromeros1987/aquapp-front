@@ -8,9 +8,13 @@ import { DashboardBranchContextService } from '../../../core/services/dashboard-
 import { ProductApiService } from '../../../core/services/product-api.service';
 import { SaleApiService } from '../../../core/services/sale-api.service';
 import { apiErrorMessage } from '../../../core/utils/api-error';
+import {
+  historyProductLabel,
+  inferSaleHistoryKind,
+} from '../../../core/utils/sales-historial-aggregate';
 import { todayDateStringOperational } from '../../../core/utils/operational-date';
 import { AppModalComponent } from '../../../shared/ui/app-modal.component';
-import { SalesVentaSubnavComponent } from './sales-venta-subnav.component';
+import { SalesIngresosSubnavComponent } from './sales-ingresos-subnav.component';
 
 @Component({
   selector: 'app-sales-registro-diario-page',
@@ -19,7 +23,7 @@ import { SalesVentaSubnavComponent } from './sales-venta-subnav.component';
     CommonModule,
     FormsModule,
     AppModalComponent,
-    SalesVentaSubnavComponent,
+    SalesIngresosSubnavComponent,
     RouterLink,
   ],
   templateUrl: './sales-registro-diario-page.component.html',
@@ -31,6 +35,8 @@ export class SalesRegistroDiarioPageComponent implements OnInit {
   private readonly branchCtx = inject(DashboardBranchContextService);
 
   branchId: number | null = null;
+  /** Día mostrado en tabla y total (YYYY-MM-DD). */
+  viewDate = '';
   addSaleModalOpen = false;
   products: ProductRow[] = [];
   sales: SaleRow[] = [];
@@ -60,19 +66,37 @@ export class SalesRegistroDiarioPageComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.formDate = todayDateStringOperational();
+    const ymd = todayDateStringOperational();
+    this.viewDate = ymd;
+    this.formDate = ymd;
   }
 
   get todayStr(): string {
     return todayDateStringOperational();
   }
 
-  get salesToday(): SaleRow[] {
-    return this.sales.filter((s) => (s.date || '').slice(0, 10) === this.todayStr);
+  get isViewingToday(): boolean {
+    return (this.viewDate || '').slice(0, 10) === this.todayStr;
   }
 
-  get totalVendidoHoy(): number {
-    return this.salesToday.reduce((sum, s) => sum + Number(s.total_amount), 0);
+  get salesForViewDate(): SaleRow[] {
+    const v = (this.viewDate || '').slice(0, 10);
+    return this.sales.filter((s) => (s.date || '').slice(0, 10) === v);
+  }
+
+  get totalVendidoDia(): number {
+    return this.salesForViewDate.reduce((sum, s) => sum + Number(s.total_amount), 0);
+  }
+
+  goToToday(): void {
+    const ymd = todayDateStringOperational();
+    this.viewDate = ymd;
+    this.formDate = ymd;
+  }
+
+  openNewSaleModal(): void {
+    this.formDate = (this.viewDate || '').slice(0, 10) || todayDateStringOperational();
+    this.addSaleModalOpen = true;
   }
 
   onBranchChange(id: number | null): void {
@@ -82,7 +106,9 @@ export class SalesRegistroDiarioPageComponent implements OnInit {
     this.products = [];
     this.sales = [];
     this.formProductId = null;
-    this.formDate = todayDateStringOperational();
+    const ymd = todayDateStringOperational();
+    this.viewDate = ymd;
+    this.formDate = ymd;
     this.cancelEdit();
     if (this.branchId == null) return;
     this.productsApi.list(this.branchId).subscribe({
@@ -161,7 +187,37 @@ export class SalesRegistroDiarioPageComponent implements OnInit {
   }
 
   productLabel(s: SaleRow): string {
-    return s.product?.name ?? `#${s.product_id}`;
+    const kind = inferSaleHistoryKind(s);
+    return historyProductLabel(s, kind);
+  }
+
+  dateTimeLabel(s: SaleRow): string {
+    const ymd = (s.date || '').slice(0, 10);
+    const parts = ymd.split('-');
+    const datePart =
+      parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : ymd || '—';
+    if (!s.created_at) return datePart;
+    const created = new Date(s.created_at);
+    if (Number.isNaN(created.getTime())) return datePart;
+    const timePart = created.toLocaleTimeString('es-MX', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+    return `${datePart} ${timePart}`;
+  }
+
+  sellerLabel(s: SaleRow): string {
+    const name = s.user?.name?.trim();
+    if (name) return name;
+    if (s.user_id != null) return `Usuario #${s.user_id}`;
+    return '—';
+  }
+
+  customerLabel(s: SaleRow): string {
+    const name = s.customer?.name?.trim();
+    if (name) return name;
+    if (s.customer_id != null) return `Cliente #${s.customer_id}`;
+    return '—';
   }
 
   startEdit(s: SaleRow): void {

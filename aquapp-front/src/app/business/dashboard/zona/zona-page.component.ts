@@ -10,6 +10,7 @@ import {
   inject,
 } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
+import { RouterLink } from '@angular/router';
 import { environment } from '../../../../environments/environment';
 import { SANTA_MARIA_IXTIYUCAN_REFERENCE_POINTS } from '../../../../environments/santa-maria-ixtiyucan-map';
 import {
@@ -25,7 +26,7 @@ import * as L from 'leaflet';
 @Component({
   selector: 'app-zona-page',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterLink],
   templateUrl: './zona-page.component.html',
   styleUrls: ['../styles/crud-page.css', './zona-page.component.scoped.css'],
 })

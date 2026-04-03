@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { CatProduct, ProductRow } from '../../../core/models/api.models';
 import { CatalogApiService } from '../../../core/services/catalog-api.service';
 import { DashboardBranchContextService } from '../../../core/services/dashboard-branch-context.service';
@@ -12,7 +13,7 @@ import { AppModalComponent } from '../../../shared/ui/app-modal.component';
 @Component({
   selector: 'app-products-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, AppModalComponent],
+  imports: [CommonModule, FormsModule, RouterLink, AppModalComponent],
   templateUrl: './products-page.component.html',
   styleUrls: ['../styles/crud-page.css', './products-page.component.scoped.css'],
 })

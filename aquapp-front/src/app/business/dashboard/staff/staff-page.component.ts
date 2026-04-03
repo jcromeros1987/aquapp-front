@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { DeliveryRoute, StaffUser } from '../../../core/models/api.models';
 import {
   StaffApiService,
@@ -16,7 +17,7 @@ import { BranchSelectComponent } from '../shared/branch-select.component';
 @Component({
   selector: 'app-staff-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, BranchSelectComponent, AppModalComponent],
+  imports: [CommonModule, FormsModule, RouterLink, BranchSelectComponent, AppModalComponent],
   templateUrl: './staff-page.component.html',
   styleUrls: ['../styles/crud-page.css', './staff-page.component.scoped.css'],
 })

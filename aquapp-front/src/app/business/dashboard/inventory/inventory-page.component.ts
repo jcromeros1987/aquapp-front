@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { CatProduct, Customer, InventoryRow, InventoryUnitRow } from '../../../core/models/api.models';
 import { CatalogApiService } from '../../../core/services/catalog-api.service';
 import { CustomerApiService } from '../../../core/services/customer-api.service';
@@ -14,7 +15,7 @@ import { AppModalComponent } from '../../../shared/ui/app-modal.component';
 @Component({
   selector: 'app-inventory-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, AppModalComponent],
+  imports: [CommonModule, FormsModule, RouterLink, AppModalComponent],
   templateUrl: './inventory-page.component.html',
   styleUrls: ['../styles/crud-page.css', './inventory-page.component.scoped.css'],
 })

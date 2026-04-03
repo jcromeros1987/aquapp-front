@@ -1,6 +1,20 @@
-import { Component, inject, input, signal } from '@angular/core';
+import {
+  afterNextRender,
+  Component,
+  DestroyRef,
+  inject,
+  input,
+  signal,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import {
+  NavigationEnd,
+  Router,
+  RouterLink,
+  RouterLinkActive,
+} from '@angular/router';
+import { filter } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MenuTreeNode } from '../../../core/models/menu-item.model';
 import { DashboardMenuService } from '../../../core/services/dashboard-menu.service';
 
@@ -16,7 +30,33 @@ export class SidebarMenuComponent {
   readonly depth = input(0);
 
   private readonly menu = inject(DashboardMenuService);
+  private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly expanded = signal<Record<string, boolean>>({});
+
+  constructor() {
+    afterNextRender(() => {
+      if (this.depth() !== 0) return;
+      const expandForUrl = () => {
+        const ids = this.menu.groupIdsToExpandForDashboardUrl(this.router.url);
+        if (ids.length === 0) return;
+        this.expanded.update((e) => {
+          const next = { ...e };
+          for (const id of ids) {
+            next[id] = true;
+          }
+          return next;
+        });
+      };
+      expandForUrl();
+      this.router.events
+        .pipe(
+          filter((e): e is NavigationEnd => e instanceof NavigationEnd),
+          takeUntilDestroyed(this.destroyRef),
+        )
+        .subscribe(() => expandForUrl());
+    });
+  }
 
   /** Ruta lista para routerLink (el template no admite spread `...`). */
   dashboardLink(route: string): string[] {

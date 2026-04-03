@@ -1,93 +1,104 @@
-<div class="page-card wide">
-  <app-sales-venta-subnav />
+<div class="page-card wide historico-page">
+  <app-sales-ingresos-subnav />
 
-  <h1>Historial de ventas</h1>
+  <h1>Historico ventas</h1>
   <p class="subtitle">
-    Todas las ventas registradas en la <strong>sucursal elegida</strong>. Mismo listado que antes estaba en
-    registro diario; aquí puedes revisar totales, editar o eliminar.
+    Concentrado por periodo (igual que en la app iOS): eliges <strong>Día, Semana, Mes o Año</strong> y ves
+    totales y desglose por producto. Despliega un periodo para editar o eliminar movimientos.
   </p>
 
   <p class="alert alert-error" *ngIf="error">{{ error }}</p>
   <p class="alert alert-ok" *ngIf="okMsg">{{ okMsg }}</p>
 
   <p class="branch-context-hint" *ngIf="branchId == null">
-    Elige una <strong>sucursal concreta</strong> en el menú lateral para ver el historial de ventas.
+    Elige una <strong>sucursal concreta</strong> en el menú lateral o en <a routerLink="/dashboard/perfil">Perfil</a>
+    para ver el historial.
   </p>
 
   <ng-container *ngIf="branchId != null">
-    <h2 class="section-title">Historial de ventas (esta sucursal)</h2>
-    <div class="sales-summary">
-      <div class="sales-summary-row">
-        <span class="sales-summary-label">Total vendido</span>
-        <strong class="sales-summary-amount">{{ totalVendido | number : '1.2-2' }}</strong>
+    <div class="historico-resumen-global">
+      <span class="historico-resumen-label">Total vendido (sucursal)</span>
+      <strong class="historico-resumen-monto">{{
+        totalVendido | currency : 'MXN' : 'symbol-narrow' : '1.2-2' : 'es-MX'
+      }}</strong>
+      <span class="historico-resumen-meta">{{ sales.length }} movimiento(s)</span>
+    </div>
+
+    <section class="historico-section">
+      <h2 class="historico-section-title">Periodo</h2>
+      <div class="historico-segmented" role="group" aria-label="Vista del historial">
+        <button
+          type="button"
+          *ngFor="let opt of granularityOptions"
+          class="historico-seg-btn"
+          [class.historico-seg-btn--active]="granularity === opt.id"
+          (click)="setGranularity(opt.id)"
+        >
+          {{ opt.label }}
+        </button>
       </div>
-      <p class="sales-summary-meta">{{ sales.length }} venta(s) en el listado</p>
-    </div>
-    <div class="data-table-wrap" *ngIf="sales.length > 0; else sinHistorial">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>Fecha</th>
-            <th>Producto</th>
-            <th>Cant.</th>
-            <th>Total</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let s of sales">
-            <ng-container *ngIf="editing?.id !== s.id">
-              <td>{{ s.date }}</td>
-              <td>{{ productLabel(s) }}</td>
-              <td>{{ s.quantity }}</td>
-              <td>{{ s.total_amount }}</td>
-            </ng-container>
-            <ng-container *ngIf="editing?.id === s.id">
-              <td><input type="date" [(ngModel)]="editDate" /></td>
-              <td>{{ productLabel(s) }}</td>
-              <td>
-                <input
-                  type="number"
-                  min="1"
-                  [(ngModel)]="editQty"
-                  (ngModelChange)="recalcEditTotal()"
-                />
-              </td>
-              <td>
-                <input type="number" step="0.01" [(ngModel)]="editTotal" />
-              </td>
-            </ng-container>
-            <td>
-              <div class="actions" *ngIf="editing?.id !== s.id">
-                <button type="button" class="btn btn-ghost" (click)="startEdit(s)">Editar</button>
-                <button type="button" class="btn btn-danger" (click)="remove(s)">Eliminar</button>
-              </div>
-              <div class="actions stack" *ngIf="editing?.id === s.id">
-                <div class="field">
-                  <span class="field-label">Costo unit.</span>
-                  <input
-                    type="number"
-                    step="0.01"
-                    [(ngModel)]="editCost"
-                    (ngModelChange)="recalcEditTotal()"
-                  />
-                </div>
-                <div class="field">
-                  <span class="field-label">Obs.</span>
-                  <input type="text" [(ngModel)]="editObs" />
-                </div>
-                <button type="button" class="btn btn-primary" (click)="saveEdit()" [disabled]="saving">
-                  Guardar
-                </button>
-                <button type="button" class="btn btn-ghost" (click)="cancelEdit()">Cancelar</button>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-    <ng-template #sinHistorial>
-      <p class="sales-summary-meta">Sin ventas registradas en esta sucursal.</p>
-    </ng-template>
+    </section>
+
+    <section class="historico-section">
+      <h2 class="historico-section-title">Concentrado</h2>
+      <p class="historico-section-footnote">
+        Cada grupo lleva su desglose por producto: unidades entre paréntesis e importe a la derecha (MXN).
+      </p>
+
+      <div *ngIf="buckets.length === 0" class="historico-empty">{{ emptyConcentradoMessage }}</div>
+
+      <div class="historico-buckets" *ngIf="buckets.length > 0">
+        <article class="historico-bucket" *ngFor="let b of buckets">
+          <div class="historico-bucket-head">
+            <div class="historico-bucket-titles">
+              <h3 class="historico-bucket-title">{{ b.title }}</h3>
+              <p
+                class="historico-bucket-meta"
+                *ngIf="b.subtitle && !isMonthSubtitle(b.subtitle)"
+              >
+                {{ b.subtitle }}
+              </p>
+            </div>
+            <div class="historico-bucket-totals">
+              <span class="historico-bucket-count">{{ b.count }} ventas</span>
+              <strong class="historico-bucket-monto">{{
+                b.total | currency : 'MXN' : 'symbol-narrow' : '1.2-2' : 'es-MX'
+              }}</strong>
+            </div>
+          </div>
+
+          <div class="historico-detail-wrap">
+            <div class="data-table-wrap historico-detail-table">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Fecha / hora</th>
+                    <th>Tipo</th>
+                    <th>Producto</th>
+                    <th>Cliente</th>
+                    <th>Vendedor</th>
+                    <th>Cant.</th>
+                    <th>Total</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let r of bucketDisplayRows(b.sales)">
+                    <td>{{ dateTimeLabel(r.sample) }}</td>
+                    <td>{{ saleKindLabel(r.sample) }}</td>
+                    <td>{{ r.productText }}</td>
+                    <td>{{ r.customerText }}</td>
+                    <td>{{ sellerLabel(r.sample) }}</td>
+                    <td>{{ r.qty }}</td>
+                    <td>{{ r.total }}</td>
+                    <td></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
   </ng-container>
 </div>

@@ -18,7 +18,7 @@
   <p class="alert alert-ok" *ngIf="okMsg">{{ okMsg }}</p>
 
   <p class="branch-context-hint" *ngIf="branchId == null">
-    Elige una <strong>sucursal</strong> en el menú lateral para registrar pagos.
+    Elige una <strong>sucursal</strong> en <a routerLink="/dashboard/perfil">Perfil</a> para registrar pagos.
   </p>
 
   <ng-container *ngIf="branchId != null">

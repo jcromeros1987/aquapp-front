@@ -10,10 +10,11 @@
   <p class="alert alert-error" *ngIf="mapConfigError && !error">{{ mapConfigError }}</p>
 
   <p class="hint zona-branch-hint" *ngIf="branchId != null">
-    Filtrando por la sucursal elegida en el menú lateral.
+    Filtrando por la sucursal elegida en <a routerLink="/dashboard/perfil">Perfil</a>.
   </p>
   <p class="hint zona-branch-hint" *ngIf="branchId === null">
-    Mostrando clientes de <strong>todas tus sucursales</strong> (menú lateral: «Todas las sucursales»).
+    Mostrando clientes de <strong>todas tus sucursales</strong> (en
+    <a routerLink="/dashboard/perfil">Perfil</a>: «Todas las sucursales»).
   </p>
 
   <p class="hint" *ngIf="periodLabel">{{ periodLabel }}</p>

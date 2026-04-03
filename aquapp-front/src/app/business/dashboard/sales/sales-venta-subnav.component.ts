@@ -13,20 +13,11 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
         [routerLinkActiveOptions]="{ exact: true }"
         >Venta a domicilio</a
       >
-      <a routerLink="/dashboard/venta/registro-diario" routerLinkActive="active"
-        >Registro diario</a
-      >
       <a
         routerLink="/dashboard/venta/sucursal"
         routerLinkActive="active"
         [routerLinkActiveOptions]="{ exact: true }"
         >Venta en sucursal</a
-      >
-      <a
-        routerLink="/dashboard/venta/historial"
-        routerLinkActive="active"
-        [routerLinkActiveOptions]="{ exact: true }"
-        >Historial</a
       >
     </nav>
   `,

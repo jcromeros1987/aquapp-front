@@ -1,5 +1,76 @@
 <div class="page-card">
   <h1>Perfil</h1>
-  <p class="subtitle">Datos del último inicio de sesión (localStorage). Para cambiar contraseña use el API o un flujo futuro.</p>
-  <pre class="user-pre">{{ userJson }}</pre>
+  <p class="subtitle">
+    Configura tu contexto de trabajo y consulta datos de sesión. La integración API ahora se administra aquí.
+  </p>
+
+  <nav class="profile-tabs" aria-label="Secciones de perfil">
+    <button
+      type="button"
+      class="profile-tab"
+      [class.profile-tab--active]="activeTab === 'perfil'"
+      (click)="setTab('perfil')"
+    >
+      Perfil
+    </button>
+    <button
+      type="button"
+      class="profile-tab"
+      [class.profile-tab--active]="activeTab === 'integracion'"
+      (click)="setTab('integracion')"
+    >
+      Integración API
+    </button>
+  </nav>
+
+  <section *ngIf="activeTab === 'perfil'" class="tab-panel">
+    <h2 class="section-title">Sucursal activa</h2>
+    <p class="hint">
+      Selecciona desde aquí la sucursal en la que vas a trabajar; se usa en ventas, inventario, gastos y balance.
+    </p>
+
+    @if (branchCtx.loadError()) {
+      <p class="alert alert-error">{{ branchCtx.loadError() }}</p>
+    } @else if (!branchCtx.ready()) {
+      <p class="state">Cargando sucursales…</p>
+    } @else if (branchCtx.branches().length > 0) {
+      <div class="field branch-field">
+        <span class="field-label">Sucursal de trabajo</span>
+        <select [ngModel]="branchCtx.branchId()" (ngModelChange)="branchCtx.setBranchId($event)">
+          <option [ngValue]="null">Todas las sucursales</option>
+          @for (b of branchCtx.branches(); track b.id) {
+            <option [ngValue]="b.id">{{ b.name }}</option>
+          }
+        </select>
+      </div>
+      <p class="hint">Actual: <strong>{{ activeBranchName() }}</strong></p>
+    } @else {
+      <p class="hint">
+        Tu usuario no tiene sucursales asignadas. Crea una en
+        <a routerLink="/dashboard/purificadoras">Purificadoras</a>.
+      </p>
+    }
+
+    <h2 class="section-title">Sesión</h2>
+    <p class="hint">Datos del último inicio de sesión guardados en localStorage.</p>
+    <pre class="user-pre">{{ userJson }}</pre>
+  </section>
+
+  <section *ngIf="activeTab === 'integracion'" class="tab-panel">
+    <h2 class="section-title">Integración API</h2>
+    <p class="hint">Base actual del backend configurada en el entorno del front:</p>
+    <p class="api-base"><code>{{ apiBaseUrl }}</code></p>
+
+    <div class="api-box">
+      <p><strong>Endpoints base útiles</strong></p>
+      <ul>
+        <li><code>POST {{ apiBaseUrl }}/login</code></li>
+        <li><code>POST {{ apiBaseUrl }}/register</code></li>
+        <li><code>GET {{ apiBaseUrl }}/branch/list</code> (requiere token)</li>
+      </ul>
+      <p class="hint">
+        Si cambias de entorno (local/staging), actualiza <code>environment.ts</code> y vuelve a compilar el front.
+      </p>
+    </div>
+  </section>
 </div>

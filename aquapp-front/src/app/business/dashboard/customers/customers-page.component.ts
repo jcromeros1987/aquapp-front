@@ -219,7 +219,8 @@ export class CustomersPageComponent implements OnInit {
         if (oa !== ob) return oa - ob;
         return (a.name || '').localeCompare(b.name || '', 'es');
       })
-      .map((r) => r.id);
+      .map((r) => Number(r.id))
+      .filter((id) => Number.isFinite(id) && id > 0);
   }
 
   remove(c: Customer): void {

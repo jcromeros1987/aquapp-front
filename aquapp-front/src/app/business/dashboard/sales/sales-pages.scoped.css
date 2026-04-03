@@ -283,3 +283,18 @@
   color: #fff;
   border-color: #4f46e5;
 }
+
+.historico-group-header td {
+  background: #f8fafc;
+  font-weight: 800;
+  color: #0f172a;
+  border-top: 1px solid #e2e8f0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.historico-subgroup-header td {
+  background: #eff6ff;
+  font-weight: 700;
+  color: #1d4ed8;
+  border-bottom: 1px solid #dbeafe;
+}
