@@ -105,6 +105,57 @@
   margin-bottom: 0.75rem;
 }
 
+.chart-head-titles {
+  flex: 1 1 12rem;
+  min-width: 0;
+}
+
+.chart-subtitle {
+  margin: 0.35rem 0 0;
+  font-size: 0.82rem;
+  color: #6b7280;
+  line-height: 1.35;
+}
+
+.home-chart-segmented {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.2rem;
+  padding: 0.25rem;
+  background: #f1f5f9;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  align-self: flex-start;
+}
+
+.home-chart-seg-btn {
+  border: none;
+  background: transparent;
+  color: #475569;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.45rem 0.75rem;
+  border-radius: 8px;
+  cursor: pointer;
+  line-height: 1.2;
+}
+
+.home-chart-seg-btn:hover {
+  background: rgba(14, 165, 233, 0.12);
+  color: #0c4a6e;
+}
+
+.home-chart-seg-btn--active {
+  background: #0ea5e9;
+  color: #fff;
+  box-shadow: 0 1px 2px rgba(14, 165, 233, 0.35);
+}
+
+.home-chart-seg-btn--active:hover {
+  background: #0284c7;
+  color: #fff;
+}
+
 .chart-card h2 {
   margin: 0;
   font-size: 1.15rem;
@@ -137,11 +188,19 @@
 }
 
 .stat-val--sales {
-  color: #4f46e5;
+  color: #0ea5e9;
 }
 
 .stat-val--exp {
-  color: #ea580c;
+  color: #fb923c;
+}
+
+.stat-val--avg-s {
+  color: #0ea5e9;
+}
+
+.stat-val--avg-e {
+  color: #fb923c;
 }
 
 .chart-hint {
@@ -158,24 +217,58 @@
 }
 
 .lg-sales {
-  color: #4f46e5;
+  color: #0ea5e9;
 }
 
 .lg-exp {
-  color: #ea580c;
+  color: #fb923c;
 }
 
 .lg-avg-s {
-  color: #7c3aed;
+  color: #0ea5e9;
 }
 
 .lg-avg-e {
-  color: #0f766e;
+  color: #fb923c;
+}
+
+.avg-line {
+  stroke-width: 2;
+  stroke-dasharray: 8 5;
+  opacity: 0.9;
+  pointer-events: none;
+}
+
+.avg-line--sales {
+  stroke: #0ea5e9;
+}
+
+.avg-line--exp {
+  stroke: #fb923c;
 }
 
 .svg-wrap {
   width: 100%;
   overflow-x: auto;
+}
+
+.svg-wrap--chart {
+  position: relative;
+}
+
+.chart-pending {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #0c4a6e;
+  background: rgba(255, 255, 255, 0.72);
+  border-radius: 8px;
+  pointer-events: none;
 }
 
 .chart-svg {
@@ -202,22 +295,8 @@
   text-anchor: end;
 }
 
-.avg-line {
-  stroke-width: 2;
-  stroke-dasharray: 8 5;
-  opacity: 0.85;
-}
-
-.avg-line--sales {
-  stroke: #7c3aed;
-}
-
-.avg-line--exp {
-  stroke: #0d9488;
-}
-
 .bar--sales {
-  fill: #6366f1;
+  fill: #0ea5e9;
 }
 
 .bar--exp {

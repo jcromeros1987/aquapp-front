@@ -4,3 +4,16 @@ code {
   padding: 0.1rem 0.35rem;
   border-radius: 4px;
 }
+
+.insumo-gasto-modal-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.edit-inline-input,
+.edit-inline-select {
+  width: 100%;
+  max-width: 22rem;
+  box-sizing: border-box;
+}

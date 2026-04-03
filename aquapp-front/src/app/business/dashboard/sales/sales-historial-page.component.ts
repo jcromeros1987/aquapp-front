@@ -16,6 +16,7 @@ import {
   inferSaleHistoryKind,
 } from '../../../core/utils/sales-historial-aggregate';
 import { todayDateStringOperational } from '../../../core/utils/operational-date';
+import { filterSalesForBranch } from '../../../core/utils/sales-branch-filter';
 import { SalesIngresosSubnavComponent } from './sales-ingresos-subnav.component';
 
 @Component({
@@ -101,8 +102,10 @@ export class SalesHistorialPageComponent {
   reloadSales(hint?: string): void {
     if (this.branchId == null) return;
     this.okMsg = hint ?? '';
-    this.salesApi.list(this.branchId).subscribe({
-      next: (s) => (this.sales = s),
+    this.salesApi.list().subscribe({
+      next: (all) => {
+        this.sales = filterSalesForBranch(all, this.branchId);
+      },
       error: (e) => (this.error = apiErrorMessage(e)),
     });
   }

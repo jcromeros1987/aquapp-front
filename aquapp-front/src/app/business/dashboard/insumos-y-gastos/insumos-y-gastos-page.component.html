@@ -1,8 +1,9 @@
 <div class="page-card">
-  <h1>Insumos</h1>
+  <h1>Insumos y gastos (catálogo)</h1>
   <p class="subtitle">
-    Rubros de materiales y operación en <code>cat_products</code> con
-    <code>catalog_kind = INSUMOS</code> (distintos de nómina y de tipos para venta).
+    Cada rubro se <strong>clasifica</strong> como <strong>Suministros y recibos</strong>, <strong>Insumos</strong> o
+    <strong>Servicios</strong> (según cómo lo registres en gastos). El nombre del rubro es libre; la clasificación
+    indica en qué flujo encaja.
   </p>
 
   <p class="alert alert-error" *ngIf="error">{{ error }}</p>
@@ -12,11 +13,17 @@
     <button type="button" class="btn btn-primary" (click)="addModalOpen = true">Nuevo rubro</button>
   </div>
 
-  <app-modal [(open)]="addModalOpen" title="Nuevo rubro de insumos" size="md">
-    <div class="toolbar">
+  <app-modal [(open)]="addModalOpen" title="Nuevo rubro de gasto (insumo)" size="md">
+    <div class="insumo-gasto-modal-fields">
+      <div class="field">
+        <span class="field-label">Clasificación</span>
+        <select [(ngModel)]="newKind">
+          <option *ngFor="let o of kindOptions" [ngValue]="o.kind">{{ o.label }}</option>
+        </select>
+      </div>
       <div class="field">
         <span class="field-label">Nombre</span>
-        <input type="text" [(ngModel)]="newName" placeholder="Ej. Jabón para planta" />
+        <input type="text" [(ngModel)]="newName" placeholder="Ej. Filtros de ósmosis" />
       </div>
       <button type="button" class="btn btn-primary" (click)="create()" [disabled]="saving">Crear</button>
     </div>
@@ -27,21 +34,28 @@
       <thead>
         <tr>
           <th>Nombre</th>
+          <th>Clasificación</th>
           <th></th>
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let r of rows">
-          <td *ngIf="editing?.id !== r.id">{{ r.name }}</td>
-          <td *ngIf="editing?.id === r.id">
-            <input type="text" [(ngModel)]="editName" />
+        <tr *ngFor="let r of rows; trackBy: trackRow">
+          <td *ngIf="!isEditingRow(r)">{{ r.name }}</td>
+          <td *ngIf="isEditingRow(r)">
+            <input type="text" [(ngModel)]="editName" class="edit-inline-input" />
+          </td>
+          <td *ngIf="!isEditingRow(r)">{{ kindLabel(r.catalog_kind) }}</td>
+          <td *ngIf="isEditingRow(r)">
+            <select [(ngModel)]="editKind" class="edit-inline-select">
+              <option *ngFor="let o of kindOptions" [ngValue]="o.kind">{{ o.label }}</option>
+            </select>
           </td>
           <td>
-            <div class="actions" *ngIf="editing?.id !== r.id">
+            <div class="actions" *ngIf="!isEditingRow(r)">
               <button type="button" class="btn btn-ghost" (click)="startEdit(r)">Editar</button>
               <button type="button" class="btn btn-danger" (click)="remove(r)">Eliminar</button>
             </div>
-            <div class="actions" *ngIf="editing?.id === r.id">
+            <div class="actions" *ngIf="isEditingRow(r)">
               <button type="button" class="btn btn-primary" (click)="saveEdit()" [disabled]="saving">
                 Guardar
               </button>
@@ -51,5 +65,6 @@
         </tr>
       </tbody>
     </table>
+    <p class="hint-muted" *ngIf="rows.length === 0">No hay rubros en el catálogo.</p>
   </div>
 </div>

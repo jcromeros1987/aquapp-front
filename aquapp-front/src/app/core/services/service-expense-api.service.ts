@@ -9,6 +9,8 @@ export interface ServiceExpenseCreatePayload {
   service_expense_type_id: number;
   amount: number;
   pay_date: string;
+  period_start?: string | null;
+  period_end?: string | null;
   notes?: string | null;
 }
 
@@ -35,7 +37,15 @@ export class ServiceExpenseApiService {
   update(
     id: number,
     body: Partial<
-      Pick<ServiceExpenseCreatePayload, 'service_expense_type_id' | 'amount' | 'pay_date' | 'notes'>
+      Pick<
+        ServiceExpenseCreatePayload,
+        | 'service_expense_type_id'
+        | 'amount'
+        | 'pay_date'
+        | 'period_start'
+        | 'period_end'
+        | 'notes'
+      >
     >,
   ): Observable<ServiceExpenseRow> {
     return this.http.put<ServiceExpenseRow>(ApiEndpoints.serviceExpenses.one(id), body);

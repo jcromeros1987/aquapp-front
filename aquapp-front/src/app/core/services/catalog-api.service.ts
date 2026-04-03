@@ -27,9 +27,9 @@ export class CatalogApiService {
       .pipe(map((r) => r.data));
   }
 
-  update(id: number, name: string): Observable<CatProduct> {
+  update(id: number, payload: { name: string; catalog_kind?: CatalogKind }): Observable<CatProduct> {
     return this.http
-      .put<{ data: CatProduct }>(ApiEndpoints.catalog.product(id), { name })
+      .put<{ data: CatProduct }>(ApiEndpoints.catalog.product(id), payload)
       .pipe(map((r) => r.data));
   }
 

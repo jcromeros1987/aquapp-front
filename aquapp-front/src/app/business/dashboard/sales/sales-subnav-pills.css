@@ -1,0 +1,46 @@
+/* Mismo patrón que el switch de agrupación en /dashboard/inicio */
+.sub-nav {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.2rem;
+  padding: 0.25rem;
+  background: #f1f5f9;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  margin: 0 0 1rem;
+}
+
+.sub-nav.sub-nav--embed {
+  margin-bottom: 0;
+}
+
+.sub-nav a {
+  display: inline-block;
+  padding: 0.45rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-decoration: none;
+  color: #475569;
+  border: none;
+  background: transparent;
+  line-height: 1.2;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.sub-nav a:hover {
+  background: rgba(14, 165, 233, 0.12);
+  color: #0c4a6e;
+}
+
+.sub-nav a.active {
+  background: #0ea5e9;
+  color: #fff;
+  box-shadow: 0 1px 2px rgba(14, 165, 233, 0.35);
+}
+
+.sub-nav a.active:hover {
+  background: #0284c7;
+  color: #fff;
+}

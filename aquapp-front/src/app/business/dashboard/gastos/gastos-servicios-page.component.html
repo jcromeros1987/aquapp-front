@@ -9,9 +9,10 @@
 
   <h1>Gastos de servicios</h1>
   <p class="subtitle">
-    Registra el <strong>costo</strong> de cada tipo de <strong>mantenimiento o servicio</strong> y el <strong>día</strong>
-    en que cuenta el gasto (aparece en la gráfica de gastos del inicio y en el balance). Los tipos se cargan desde el
-    catálogo del sistema.
+    <strong>Luz</strong> y <strong>limpieza de tanques</strong> van en
+    <a routerLink="/dashboard/gastos/suministros">Suministros</a>. Aquí registras
+    <strong>mantenimiento de equipo</strong> (purificadora, bomba, etc.). Opcionalmente puedes indicar
+    <strong>periodo de cobertura</strong> (desde / hasta) para prorratear el monto en la gráfica y el balance.
   </p>
 
   <p class="alert alert-error" *ngIf="error">{{ error }}</p>
@@ -40,6 +41,14 @@
           <span class="field-label">Fecha del pago (en gráfica)</span>
           <input type="date" [(ngModel)]="formPayDate" />
         </div>
+        <div class="field">
+          <span class="field-label">Periodo cubre desde (opcional)</span>
+          <input type="date" [(ngModel)]="formPeriodStart" />
+        </div>
+        <div class="field">
+          <span class="field-label">Periodo cubre hasta (opcional)</span>
+          <input type="date" [(ngModel)]="formPeriodEnd" />
+        </div>
         <div class="field full">
           <span class="field-label">Notas (opcional)</span>
           <input type="text" [(ngModel)]="formNotes" placeholder="Factura, técnico, referencia…" />
@@ -64,7 +73,8 @@
       <table class="data-table">
         <thead>
           <tr>
-            <th>Fecha</th>
+            <th>Fecha pago</th>
+            <th>Periodo cobertura</th>
             <th>Tipo</th>
             <th>Monto</th>
             <th>Notas</th>
@@ -74,6 +84,7 @@
         <tbody>
           <tr *ngFor="let r of rows; trackBy: trackRow">
             <td>{{ r.pay_date | slice: 0:10 }}</td>
+            <td class="cell-period">{{ periodLabel(r) }}</td>
             <td>{{ typeLabelFromRow(r) }}</td>
             <td>{{ r.amount | number: '1.2-2' }}</td>
             <td class="cell-notes">{{ r.notes || '—' }}</td>
@@ -91,7 +102,7 @@
   </ng-container>
 </div>
 
-<app-modal [(open)]="editModalOpen" title="Editar pago" size="md">
+<app-modal [(open)]="editModalOpen" title="Editar pago" size="lg">
   <ng-container *ngIf="editing">
     <div class="form-grid" *ngIf="types.length">
       <div class="field full">
@@ -107,6 +118,14 @@
       <div class="field">
         <span class="field-label">Fecha del pago</span>
         <input type="date" [(ngModel)]="editPayDate" />
+      </div>
+      <div class="field">
+        <span class="field-label">Periodo desde</span>
+        <input type="date" [(ngModel)]="editPeriodStart" />
+      </div>
+      <div class="field">
+        <span class="field-label">Periodo hasta</span>
+        <input type="date" [(ngModel)]="editPeriodEnd" />
       </div>
       <div class="field full">
         <span class="field-label">Notas</span>

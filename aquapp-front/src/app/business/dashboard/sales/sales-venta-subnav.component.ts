@@ -5,6 +5,7 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
   selector: 'app-sales-venta-subnav',
   standalone: true,
   imports: [RouterLink, RouterLinkActive],
+  styleUrl: './sales-subnav-pills.css',
   template: `
     <nav class="sub-nav">
       <a

@@ -3,6 +3,7 @@ import { Component, inject } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { forkJoin } from 'rxjs';
 import { CatProduct, InsumoExpenseRow } from '../../../core/models/api.models';
 import { CatalogApiService } from '../../../core/services/catalog-api.service';
 import { DashboardBranchContextService } from '../../../core/services/dashboard-branch-context.service';
@@ -10,6 +11,7 @@ import { InsumoExpenseApiService } from '../../../core/services/insumo-expense-a
 import { apiErrorMessage } from '../../../core/utils/api-error';
 import { todayDateStringOperational } from '../../../core/utils/operational-date';
 import { AppModalComponent } from '../../../shared/ui/app-modal.component';
+import { isSuministroInsumoExpenseCat } from './gastos-suministros.constants';
 
 @Component({
   selector: 'app-gastos-insumos-page',
@@ -65,11 +67,16 @@ export class GastosInsumosPageComponent {
     this.formNotes = '';
     if (this.branchId == null) return;
 
-    this.catalogApi.list('INSUMOS').subscribe({
-      next: (list) => {
-        this.insumosCatalog = list;
-        if (list.length === 1) {
-          this.formCatProductId = list[0].id;
+    forkJoin({
+      sueldos: this.catalogApi.list('INSUMO_SUELDOS'),
+      servicios: this.catalogApi.list('INSUMO_SERVICIOS'),
+    }).subscribe({
+      next: ({ sueldos, servicios }) => {
+        this.insumosCatalog = [...sueldos, ...servicios].sort((a, b) =>
+          (a.name || '').localeCompare(b.name || '', 'es'),
+        );
+        if (this.insumosCatalog.length === 1) {
+          this.formCatProductId = this.insumosCatalog[0].id;
         }
       },
       error: (e) => (this.error = apiErrorMessage(e)),
@@ -81,7 +88,7 @@ export class GastosInsumosPageComponent {
     if (this.branchId == null) return;
     this.okMsg = hint ?? '';
     this.expenseApi.list(this.branchId).subscribe({
-      next: (r) => (this.rows = r),
+      next: (r) => (this.rows = r.filter((row) => !isSuministroInsumoExpenseCat(row.cat_product))),
       error: (e) => (this.error = apiErrorMessage(e)),
     });
   }

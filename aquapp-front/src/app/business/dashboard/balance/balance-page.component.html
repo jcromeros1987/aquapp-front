@@ -2,8 +2,9 @@
   <h1>Balance</h1>
   <p class="subtitle">
     <strong>Ingresos</strong> (ventas registradas) menos <strong>gastos</strong>: mercancía vendida,
-    <a routerLink="/dashboard/gastos/sueldos">sueldos</a> e
-    <a routerLink="/dashboard/gastos/insumos">insumos</a>,
+    <a routerLink="/dashboard/gastos/sueldos">sueldos</a>,
+    <a routerLink="/dashboard/gastos/suministros">suministros</a> (agua, luz, limpieza),
+    <a routerLink="/dashboard/gastos/insumos">insumos</a> y
     <a routerLink="/dashboard/gastos/servicios">servicios</a>. Semana, mes o año calendario; zona horaria
     México. Si en <a routerLink="/dashboard/perfil">Perfil</a> eliges
     <strong>todas las sucursales</strong>, se suman todas las tuyas.
@@ -70,6 +71,115 @@
         <strong class="bc-value">{{ d.expenses_total | number: '1.2-2' }}</strong>
       </div>
     </div>
+
+    @if (d.delivery_jug_unit; as dj) {
+      <section class="dj-section" aria-label="Costo por garrafón a domicilio">
+        <h2 class="dj-title">Costo por garrafón a domicilio</h2>
+        <p class="dj-lead">
+          Suma el <strong>costo de mercancía</strong> de las ventas con «domicilio» en el producto. La
+          <strong>luz</strong> se registra en <a routerLink="/dashboard/gastos/suministros">Gastos → Suministros</a> (tipo
+          Luz); el monto se <strong>prorratea</strong> según el periodo de cobertura que indiques o, si no hay periodo,
+          según la fecha de pago. El <strong>costo de luz por garrafón</strong> divide esa porción del recibo entre los
+          <strong>garrafones producidos</strong> del periodo (Venta de agua y Garrafón, sin envases ni botellas). Liners,
+          tapas y gasolina (insumos), el resto de servicios y la nómina de reparto se reparten por garrafones
+          <em>a domicilio</em> vendidos.
+        </p>
+        <p class="dj-summary">
+          <span
+            ><strong>{{ dj.domicilio_jugs_sold }}</strong> a domicilio</span
+          >
+          <span class="dj-sep">·</span>
+          <span
+            ><strong>{{ dj.produced_jugs_period }}</strong> producido(s) en el periodo</span
+          >
+          <span class="dj-sep">·</span>
+          <span
+            >Ingresos domicilio: <strong>{{ dj.income_domicilio | number: '1.2-2' }}</strong></span
+          >
+        </p>
+
+        @if (dj.per_jug; as pj) {
+          <div class="dj-table-wrap">
+            <table class="dj-table">
+              <thead>
+                <tr>
+                  <th scope="col">Concepto</th>
+                  <th scope="col" class="dj-num">Por garrafón</th>
+                  <th scope="col" class="dj-num">En el periodo</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Mercancía vendida (costo × cantidad)</td>
+                  <td class="dj-num">{{ pj.merchandise_cost | number: '1.2-4' }}</td>
+                  <td class="dj-num">{{ dj.merchandise_cost_domicilio | number: '1.2-2' }}</td>
+                </tr>
+                <tr>
+                  <td>Reparto (nómina registrada)</td>
+                  <td class="dj-num">{{ pj.reparto | number: '1.2-4' }}</td>
+                  <td class="dj-num">{{ dj.totals_period.reparto | number: '1.2-2' }}</td>
+                </tr>
+                <tr>
+                  <td>Liners</td>
+                  <td class="dj-num">{{ pj.liners | number: '1.2-4' }}</td>
+                  <td class="dj-num">{{ dj.totals_period.liners | number: '1.2-2' }}</td>
+                </tr>
+                <tr>
+                  <td>Tapas</td>
+                  <td class="dj-num">{{ pj.tapas | number: '1.2-4' }}</td>
+                  <td class="dj-num">{{ dj.totals_period.tapas | number: '1.2-2' }}</td>
+                </tr>
+                <tr>
+                  <td>Luz <span class="dj-concept-hint">(servicio, prorrateo ÷ producidos)</span></td>
+                  <td class="dj-num">
+                    @if (pj.luz !== null) {
+                      {{ pj.luz | number: '1.2-4' }}
+                    } @else {
+                      <span class="dj-na">—</span>
+                    }
+                  </td>
+                  <td class="dj-num">{{ dj.totals_period.luz | number: '1.2-2' }}</td>
+                </tr>
+                <tr>
+                  <td>Gasolina</td>
+                  <td class="dj-num">{{ pj.gasolina | number: '1.2-4' }}</td>
+                  <td class="dj-num">{{ dj.totals_period.gasolina | number: '1.2-2' }}</td>
+                </tr>
+                <tr>
+                  <td>Servicios / mantenimiento</td>
+                  <td class="dj-num">{{ pj.servicios | number: '1.2-4' }}</td>
+                  <td class="dj-num">{{ dj.totals_period.servicios | number: '1.2-2' }}</td>
+                </tr>
+                <tr class="dj-tr-total">
+                  <td><strong>Total estimado</strong></td>
+                  <td class="dj-num">
+                    <strong>{{ pj.total_estimado | number: '1.2-4' }}</strong>
+                  </td>
+                  <td class="dj-num">
+                    <strong>{{ dj.total_cost_period_estimado | number: '1.2-2' }}</strong>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        } @else {
+          <p class="dj-empty">
+            No hubo ventas a domicilio en este periodo; el costo por garrafón no aplica. Los gastos del periodo siguen
+            reflejados arriba en las tarjetas generales.
+          </p>
+        }
+
+        <p class="dj-note">{{ dj.method_note }}</p>
+        <p class="dj-hint">
+          Registra los pagos en
+          <a routerLink="/dashboard/gastos/sueldos">Sueldos</a>,
+          <a routerLink="/dashboard/gastos/insumos">Insumos</a> (Liners, Tapas, Gasolina) y
+          <a routerLink="/dashboard/gastos/servicios">Servicios</a> (incluye <strong>Luz</strong> y periodo de
+          facturación opcional). Los productos deben llevar <strong>«domicilio»</strong> en el nombre para contarse
+          como venta a domicilio.
+        </p>
+      </section>
+    }
 
     <div
       class="balance-result"

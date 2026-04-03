@@ -5,6 +5,39 @@ import { ApiEndpoints } from '../config/api-endpoints';
 
 export type BalancePeriod = 'week' | 'month' | 'year';
 
+/** Prorrateo del periodo / garrafón a domicilio vendido (ver `method_note` en API). */
+export interface DeliveryJugPerUnitBreakdown {
+  merchandise_cost: number;
+  reparto: number;
+  liners: number;
+  tapas: number;
+  /** Recibo de luz ÷ garrafones producidos en el periodo; null si no hay volumen de producción. */
+  luz: number | null;
+  gasolina: number;
+  servicios: number;
+  total_estimado: number;
+}
+
+export interface DeliveryJugUnitPayload {
+  domicilio_jugs_sold: number;
+  /** Garrafones producidos (ventas agua/garrafón sin envase ni botella) para prorratear luz. */
+  produced_jugs_period: number;
+  income_domicilio: number;
+  merchandise_cost_domicilio: number;
+  totals_period: {
+    reparto: number;
+    liners: number;
+    tapas: number;
+    luz: number;
+    gasolina: number;
+    servicios: number;
+  };
+  /** Suma mercancía domicilio + reparto + insumos (4 rubros) + servicios del periodo. */
+  total_cost_period_estimado: number;
+  per_jug: DeliveryJugPerUnitBreakdown | null;
+  method_note: string;
+}
+
 export interface FinancialBalanceResponse {
   period: BalancePeriod;
   label: string;
@@ -18,6 +51,7 @@ export interface FinancialBalanceResponse {
   expenses_services: number;
   expenses_total: number;
   balance: number;
+  delivery_jug_unit?: DeliveryJugUnitPayload;
 }
 
 @Injectable({ providedIn: 'root' })

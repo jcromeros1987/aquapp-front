@@ -186,3 +186,108 @@
   font-size: 0.82rem;
   color: #6b7280;
 }
+
+.dj-section {
+  margin-bottom: 1.5rem;
+  padding: 1rem 1.15rem 1.15rem;
+  border-radius: 12px;
+  border: 1px solid #bae6fd;
+  background: linear-gradient(165deg, #f8fafc 0%, #f0f9ff 100%);
+}
+
+.dj-title {
+  margin: 0 0 0.5rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #0c4a6e;
+}
+
+.dj-lead,
+.dj-summary,
+.dj-note,
+.dj-hint,
+.dj-empty {
+  margin: 0 0 0.65rem;
+  font-size: 0.86rem;
+  line-height: 1.45;
+  color: #475569;
+}
+
+.dj-summary {
+  font-variant-numeric: tabular-nums;
+}
+
+.dj-sep {
+  margin: 0 0.35rem;
+  color: #94a3b8;
+}
+
+.dj-table-wrap {
+  overflow-x: auto;
+  margin: 0.75rem 0 0.65rem;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+}
+
+.dj-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.84rem;
+}
+
+.dj-table th,
+.dj-table td {
+  padding: 0.5rem 0.65rem;
+  text-align: left;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.dj-table th {
+  font-weight: 600;
+  color: #64748b;
+  background: #f8fafc;
+}
+
+.dj-table .dj-num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.dj-tr-total td {
+  border-bottom: none;
+  background: #f0f9ff;
+}
+
+.dj-note {
+  margin-bottom: 0.5rem;
+  font-size: 0.8rem;
+  color: #64748b;
+  font-style: italic;
+}
+
+.dj-hint {
+  margin-bottom: 0;
+  font-size: 0.8rem;
+}
+
+.dj-hint a {
+  color: #0369a1;
+}
+
+.dj-empty {
+  padding: 0.5rem 0;
+  color: #b45309;
+}
+
+.dj-concept-hint {
+  display: inline;
+  font-weight: 400;
+  font-size: 0.78em;
+  color: #94a3b8;
+}
+
+.dj-na {
+  color: #94a3b8;
+}

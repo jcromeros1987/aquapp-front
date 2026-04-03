@@ -7,7 +7,13 @@ export interface Branch {
 }
 
 /** Clasificación en `cat_products`. */
-export type CatalogKind = 'PRODUCTOS' | 'INSUMOS' | 'NOMINA' | 'INVENTARIO';
+export type CatalogKind =
+  | 'PRODUCTOS'
+  | 'NOMINA'
+  | 'INVENTARIO'
+  | 'INSUMO_SUELDOS'
+  | 'INSUMO_SUMINISTROS_RECIBOS'
+  | 'INSUMO_SERVICIOS';
 
 export interface CatProduct {
   id: number;
@@ -134,6 +140,9 @@ export interface ServiceExpenseRow {
   service_expense_type_id: number;
   amount: string | number;
   pay_date: string;
+  /** Cobertura del gasto (p. ej. recibo de luz); prorrateo en balance. */
+  period_start?: string | null;
+  period_end?: string | null;
   notes: string | null;
   recorded_by_user_id: number | null;
   created_at?: string | null;
@@ -148,6 +157,9 @@ export interface InsumoExpenseRow {
   cat_product_id: number;
   amount: string | number;
   pay_date: string;
+  /** Cobertura del recibo (prorrateo en gráfica/balance si ambas vienen). */
+  period_start?: string | null;
+  period_end?: string | null;
   notes: string | null;
   recorded_by_user_id: number | null;
   created_at?: string | null;

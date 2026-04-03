@@ -1,11 +1,25 @@
 <div class="page-card wide">
-  <app-sales-ingresos-subnav />
+  <div class="ingresos-top-bar">
+    <app-sales-ingresos-subnav embedInToolbarRow />
+    <div class="ingresos-registro-actions" *ngIf="branchId != null">
+      <div class="toolbar wrap registro-toolbar-dense ingresos-actions-toolbar">
+        <div class="field">
+          <span class="field-label">Día a consultar</span>
+          <input type="date" [(ngModel)]="viewDate" (ngModelChange)="onViewDateInputChange()" />
+        </div>
+        <button type="button" class="btn btn-ghost" (click)="goToToday()" [disabled]="isViewingToday">
+          Hoy
+        </button>
+        <button type="button" class="btn btn-primary" (click)="openNewSaleModal()">Nueva venta</button>
+      </div>
+    </div>
+  </div>
 
   <h1>Registro diario de ventas</h1>
   <p class="subtitle">
     Anota lo vendido por día y revisa el total del día. El <strong>historial completo</strong> está en
-    <a routerLink="/dashboard/ingresos/historial">Historial de ventas</a>. El servidor asigna al vendedor según tu
-    sesión.
+    <a routerLink="/dashboard/ingresos/historial">Historial de ventas</a>. Al registrar una venta puedes indicar
+    <strong>quién la realizó</strong> (personal de la sucursal o tu usuario).
   </p>
 
   <p class="alert alert-error" *ngIf="error">{{ error }}</p>
@@ -17,15 +31,41 @@
   </p>
 
   <ng-container *ngIf="branchId != null">
-    <div class="toolbar wrap">
-      <div class="field">
-        <span class="field-label">Día a consultar</span>
-        <input type="date" [(ngModel)]="viewDate" />
-      </div>
-      <button type="button" class="btn btn-ghost" (click)="goToToday()" [disabled]="isViewingToday">
-        Hoy
+    <div class="selected-date-banner" *ngIf="selectedDateLongLabel">
+      Consultando: {{ selectedDateLongLabel }}
+    </div>
+
+    <div class="week-strip-wrap" aria-label="Siete días con el seleccionado al centro; totales por día">
+      <button
+        type="button"
+        class="week-strip-nav"
+        (click)="shiftWeek(-1)"
+        aria-label="Retroceder 7 días"
+      >
+        ‹
       </button>
-      <button type="button" class="btn btn-primary" (click)="openNewSaleModal()">Nueva venta</button>
+      <div class="week-strip" role="list">
+        <button
+          type="button"
+          *ngFor="let day of weekStripDays; trackBy: trackByYmd"
+          class="week-strip-day"
+          [class.week-strip-day--active]="(viewDate || '').slice(0, 10) === day.ymd"
+          (click)="selectStripDay(day.ymd)"
+          role="listitem"
+        >
+          <span class="week-strip-wd">{{ day.weekdayLabel }}</span>
+          <span class="week-strip-dt">{{ day.dateShortLabel }}</span>
+          <span class="week-strip-amt">{{ day.total | currency : 'MXN' : 'symbol' : '1.0-0' : 'es-MX' }}</span>
+        </button>
+      </div>
+      <button
+        type="button"
+        class="week-strip-nav"
+        (click)="shiftWeek(1)"
+        aria-label="Avanzar 7 días"
+      >
+        ›
+      </button>
     </div>
 
     <app-modal [(open)]="addSaleModalOpen" title="Nueva venta" size="lg">
@@ -35,6 +75,12 @@
           <select [(ngModel)]="formProductId" (ngModelChange)="onProductPicked()">
             <option [ngValue]="null">—</option>
             <option *ngFor="let p of products" [ngValue]="p.id">{{ p.name }} ({{ p.cost }})</option>
+          </select>
+        </div>
+        <div class="field">
+          <span class="field-label">Vendedor</span>
+          <select [(ngModel)]="formSellerUserId">
+            <option *ngFor="let u of saleSellerOptions" [ngValue]="u.id">{{ u.name }}</option>
           </select>
         </div>
         <div class="field">
@@ -74,11 +120,12 @@
       </div>
     </app-modal>
 
-    <h2 class="section-title">Ventas del día ({{ (viewDate || '').slice(0, 10) }})</h2>
+    <h2 class="section-title">Ventas del día</h2>
+    <p class="subtitle section-date-echo">{{ selectedDateLongLabel }}</p>
     <div class="sales-summary">
       <div class="sales-summary-row">
         <span class="sales-summary-label">Total del día</span>
-        <strong class="sales-summary-amount">{{ totalVendidoDia | number : '1.2-2' }}</strong>
+        <strong class="sales-summary-amount">{{ totalVendidoDia | currency : 'MXN' : 'symbol' : '1.0-2' : 'es-MX' }}</strong>
       </div>
       <p class="sales-summary-meta">{{ salesForViewDate.length }} venta(s)</p>
     </div>
@@ -109,7 +156,11 @@
               <td><input type="date" [(ngModel)]="editDate" /></td>
               <td>{{ productLabel(s) }}</td>
               <td>{{ customerLabel(s) }}</td>
-              <td>{{ sellerLabel(s) }}</td>
+              <td>
+                <select [(ngModel)]="editSellerUserId" class="select-inline">
+                  <option *ngFor="let u of saleSellerOptionsForEdit" [ngValue]="u.id">{{ u.name }}</option>
+                </select>
+              </td>
               <td>
                 <input
                   type="number"

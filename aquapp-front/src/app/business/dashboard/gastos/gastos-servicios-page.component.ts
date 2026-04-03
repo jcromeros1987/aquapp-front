@@ -9,6 +9,7 @@ import { ServiceExpenseApiService } from '../../../core/services/service-expense
 import { apiErrorMessage } from '../../../core/utils/api-error';
 import { todayDateStringOperational } from '../../../core/utils/operational-date';
 import { AppModalComponent } from '../../../shared/ui/app-modal.component';
+import { isSuministroServiceTypeName } from './gastos-suministros.constants';
 
 @Component({
   selector: 'app-gastos-servicios-page',
@@ -32,6 +33,9 @@ export class GastosServiciosPageComponent {
   formTypeId: number | null = null;
   formAmount: number | null = null;
   formPayDate = '';
+  /** Periodo de cobertura (opcional); usar para luz u otros servicios facturados por rango. */
+  formPeriodStart = '';
+  formPeriodEnd = '';
   formNotes = '';
 
   editModalOpen = false;
@@ -39,6 +43,8 @@ export class GastosServiciosPageComponent {
   editTypeId: number | null = null;
   editAmount: number | null = null;
   editPayDate = '';
+  editPeriodStart = '';
+  editPeriodEnd = '';
   editNotes = '';
 
   saving = false;
@@ -59,14 +65,16 @@ export class GastosServiciosPageComponent {
     this.formTypeId = null;
     this.formAmount = null;
     this.formPayDate = todayDateStringOperational();
+    this.formPeriodStart = '';
+    this.formPeriodEnd = '';
     this.formNotes = '';
     if (this.branchId == null) return;
 
     this.expenseApi.listTypes().subscribe({
       next: (list) => {
-        this.types = list;
-        if (list.length === 1) {
-          this.formTypeId = list[0].id;
+        this.types = list.filter((t) => !isSuministroServiceTypeName(t.name));
+        if (this.types.length === 1) {
+          this.formTypeId = this.types[0].id;
         }
       },
       error: (e) => (this.error = apiErrorMessage(e)),
@@ -78,7 +86,8 @@ export class GastosServiciosPageComponent {
     if (this.branchId == null) return;
     this.okMsg = hint ?? '';
     this.expenseApi.list(this.branchId).subscribe({
-      next: (r) => (this.rows = r),
+      next: (r) =>
+        (this.rows = r.filter((row) => !isSuministroServiceTypeName(row.service_expense_type?.name))),
       error: (e) => (this.error = apiErrorMessage(e)),
     });
   }
@@ -93,6 +102,16 @@ export class GastosServiciosPageComponent {
       this.error = 'Completa tipo de servicio, monto y fecha del pago.';
       return;
     }
+    const ps = this.formPeriodStart?.slice(0, 10) || '';
+    const pe = this.formPeriodEnd?.slice(0, 10) || '';
+    if ((ps && !pe) || (!ps && pe)) {
+      this.error = 'Si usas periodo de cobertura, indica fecha inicial y final.';
+      return;
+    }
+    if (ps && pe && pe < ps) {
+      this.error = 'La fecha fin del periodo debe ser mayor o igual al inicio.';
+      return;
+    }
     if (this.formAmount <= 0) {
       this.error = 'El monto debe ser mayor a cero.';
       return;
@@ -105,12 +124,16 @@ export class GastosServiciosPageComponent {
         service_expense_type_id: this.formTypeId,
         amount: this.formAmount,
         pay_date: this.formPayDate.slice(0, 10),
+        period_start: ps || null,
+        period_end: pe || null,
         notes: this.formNotes.trim() || null,
       })
       .subscribe({
         next: () => {
           this.saving = false;
           this.formAmount = null;
+          this.formPeriodStart = '';
+          this.formPeriodEnd = '';
           this.formNotes = '';
           this.reloadRows('Pago registrado. Se refleja en la gráfica del inicio y en el balance.');
         },
@@ -126,6 +149,8 @@ export class GastosServiciosPageComponent {
     this.editTypeId = row.service_expense_type_id;
     this.editAmount = Number(row.amount);
     this.editPayDate = (row.pay_date || '').slice(0, 10);
+    this.editPeriodStart = (row.period_start || '').slice(0, 10);
+    this.editPeriodEnd = (row.period_end || '').slice(0, 10);
     this.editNotes = row.notes ?? '';
     this.editModalOpen = true;
   }
@@ -144,6 +169,16 @@ export class GastosServiciosPageComponent {
     ) {
       return;
     }
+    const eps = this.editPeriodStart?.slice(0, 10) || '';
+    const epe = this.editPeriodEnd?.slice(0, 10) || '';
+    if ((eps && !epe) || (!eps && epe)) {
+      this.error = 'Si usas periodo de cobertura, indica fecha inicial y final.';
+      return;
+    }
+    if (eps && epe && epe < eps) {
+      this.error = 'La fecha fin del periodo debe ser mayor o igual al inicio.';
+      return;
+    }
     this.saving = true;
     this.error = '';
     this.expenseApi
@@ -151,6 +186,8 @@ export class GastosServiciosPageComponent {
         service_expense_type_id: this.editTypeId,
         amount: this.editAmount,
         pay_date: this.editPayDate.slice(0, 10),
+        period_start: eps || null,
+        period_end: epe || null,
         notes: this.editNotes.trim() || null,
       })
       .subscribe({
@@ -185,5 +222,12 @@ export class GastosServiciosPageComponent {
 
   trackRow(_i: number, r: ServiceExpenseRow): number {
     return r.id;
+  }
+
+  periodLabel(r: ServiceExpenseRow): string {
+    const a = (r.period_start || '').slice(0, 10);
+    const b = (r.period_end || '').slice(0, 10);
+    if (a && b) return `${a} – ${b}`;
+    return '—';
   }
 }

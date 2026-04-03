@@ -1,4 +1,5 @@
 import { SaleRow } from '../models/api.models';
+import { todayDateStringOperational } from './operational-date';
 
 export type HistoryGranularity = 'day' | 'week' | 'month' | 'year';
 
@@ -90,12 +91,35 @@ export function historyProductLabel(s: SaleRow, kind: SaleHistoryKind): string {
   return `Producto #${s.product_id}`;
 }
 
+function isValidYmd(ymd: string): boolean {
+  return /^\d{4}-\d{2}-\d{2}$/.test(ymd);
+}
+
+/**
+ * Día contable de la venta: columna `date` en YYYY-MM-DD si es válida; si no, parseo ISO o
+ * `created_at` en `America/Mexico_City` (reportes móvil / registro diario web).
+ */
 export function saleDateYmd(s: SaleRow): string {
-  const fromDate = (s.date || '').slice(0, 10);
-  if (fromDate.length === 10) return fromDate;
-  const fromCreated = (s.created_at || '').slice(0, 10);
-  if (fromCreated.length === 10) return fromCreated;
-  return '';
+  const raw = s.date;
+  const str = raw == null ? '' : String(raw).trim();
+  const head = str.slice(0, 10);
+  if (isValidYmd(head)) {
+    return head;
+  }
+  if (str.length > 0) {
+    const dParsed = new Date(str);
+    if (!Number.isNaN(dParsed.getTime())) {
+      return todayDateStringOperational(dParsed);
+    }
+  }
+  const created = s.created_at;
+  if (!created) return '';
+  const d = new Date(created);
+  if (!Number.isNaN(d.getTime())) {
+    return todayDateStringOperational(d);
+  }
+  const fromCreated = String(created).slice(0, 10);
+  return isValidYmd(fromCreated) ? fromCreated : '';
 }
 
 export function entriesFromSales(sales: SaleRow[]): HistorySaleEntry[] {

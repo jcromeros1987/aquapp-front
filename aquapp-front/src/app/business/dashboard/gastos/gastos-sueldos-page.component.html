@@ -7,9 +7,10 @@
 
   <h1>Sueldos de repartidores</h1>
   <p class="subtitle">
-    Registra cuánto pagas, <strong>en qué fecha</strong> contabiliza el pago (aparece en la barra verde «Gastos» del
+    Registra cuánto pagas, <strong>en qué fecha</strong> contabiliza el pago (aparece en la barra naranja «Gastos» del
     inicio junto al costo de mercancía vendida) y opcionalmente el <strong>día habitual</strong> de pago (viernes,
-    quincenal…). Solo aparecen empleados con rol <strong>repartidor</strong> de la sucursal.
+    quincenal…). Elige un repartidor de la lista o <strong>Otro</strong> para dar de alta uno nuevo en esta sucursal y
+    registrar el pago en el mismo paso.
   </p>
 
   <p class="alert alert-error" *ngIf="error">{{ error }}</p>
@@ -22,14 +23,78 @@
   <ng-container *ngIf="branchId != null">
     <div class="form-panel">
       <h2 class="section-title">Registrar pago</h2>
-      <div class="form-grid" *ngIf="repartidores.length; else sinReparto">
+      <p class="hint-muted field-full-hint" *ngIf="repartidores.length === 0">
+        No hay repartidores en el listado.
+        <span *ngIf="staff.length === 0">
+          Puede no haber personal en
+          <a routerLink="/dashboard/personal">Personal</a> para esta sucursal.
+        </span>
+        <span *ngIf="staff.length > 0">
+          Hay personal sin rol <code>delivery</code>: puedes asignarlo en
+          <a routerLink="/dashboard/personal">Personal</a> o usar <strong>Otro</strong> abajo.
+        </span>
+      </p>
+      <div class="form-grid">
         <div class="field">
           <span class="field-label">Repartidor</span>
-          <select [(ngModel)]="formUserId">
+          <select
+            [(ngModel)]="formUserId"
+            (ngModelChange)="onRepartidorSelectChange()"
+          >
             <option [ngValue]="null">— Elija —</option>
             <option *ngFor="let u of repartidores" [ngValue]="u.id">{{ staffLabel(u) }}</option>
+            <option [ngValue]="NEW_REPARTIDOR_ID">Otro (nuevo repartidor)…</option>
           </select>
         </div>
+
+        <div class="field full new-repartidor-panel" *ngIf="isPickingNewRepartidor()">
+          <h3 class="new-repartidor-title">Alta de repartidor en esta sucursal</h3>
+          <p class="hint-muted new-repartidor-lead">
+            Se creará el usuario con rol repartidor y luego el pago. Podrá entrar con este correo y contraseña.
+          </p>
+          <div class="form-grid new-repartidor-grid">
+            <div class="field">
+              <span class="field-label">Nombre(s)</span>
+              <input type="text" [(ngModel)]="newRepName" autocomplete="given-name" placeholder="Ej. Juan" />
+            </div>
+            <div class="field">
+              <span class="field-label">Apellido paterno</span>
+              <input
+                type="text"
+                [(ngModel)]="newRepPaternal"
+                autocomplete="family-name"
+                placeholder="Ej. Pérez"
+              />
+            </div>
+            <div class="field">
+              <span class="field-label">Apellido materno</span>
+              <input type="text" [(ngModel)]="newRepMaternal" placeholder="Ej. López" />
+            </div>
+            <div class="field">
+              <span class="field-label">Correo (inicio de sesión)</span>
+              <input
+                type="email"
+                [(ngModel)]="newRepEmail"
+                autocomplete="username"
+                placeholder="correo@ejemplo.com"
+              />
+            </div>
+            <div class="field">
+              <span class="field-label">Contraseña (mín. 8 caracteres)</span>
+              <input
+                type="password"
+                [(ngModel)]="newRepPassword"
+                autocomplete="new-password"
+                placeholder="Contraseña temporal"
+              />
+            </div>
+            <div class="field">
+              <span class="field-label">Fecha de nacimiento</span>
+              <input type="date" [(ngModel)]="newRepBirthday" />
+            </div>
+          </div>
+        </div>
+
         <div class="field">
           <span class="field-label">Monto pagado</span>
           <input type="number" min="0.01" step="0.01" [(ngModel)]="formAmount" placeholder="0.00" />
@@ -50,24 +115,16 @@
         </div>
         <div class="field full actions">
           <button type="button" class="btn btn-primary" [disabled]="saving" (click)="create()">
-            {{ saving ? 'Guardando…' : 'Guardar pago' }}
+            {{
+              saving
+                ? 'Guardando…'
+                : isPickingNewRepartidor()
+                  ? 'Dar de alta repartidor y guardar pago'
+                  : 'Guardar pago'
+            }}
           </button>
         </div>
       </div>
-      <ng-template #sinReparto>
-        <p class="hint-muted" *ngIf="staff.length === 0">
-          No hay personal listado para esta sucursal en
-          <a routerLink="/dashboard/personal">Personal</a> (solo cuentan roles gestor, asistente o
-          <strong>repartidor</strong>). Si eliges otra sucursal en
-          <a routerLink="/dashboard/perfil">Perfil</a>, puede haber personal allí.
-        </p>
-        <p class="hint-muted" *ngIf="staff.length > 0">
-          Hay {{ staff.length }} persona(s) en esta sucursal, pero <strong>ninguna con rol repartidor</strong>
-          (<code>delivery</code>). Esta pantalla solo permite pagos a repartidores. Asigna el rol en
-          <a routerLink="/dashboard/personal">Personal</a> o ejecuta en el API
-          <code>php artisan db:seed --class=StaffSeeder</code> (asigna reparto a quien definas en el seeder).
-        </p>
-      </ng-template>
     </div>
 
     <h2 class="section-title">Historial de pagos (esta sucursal)</h2>
@@ -106,15 +163,24 @@
 
 <app-modal [(open)]="editModalOpen" title="Editar pago" size="md">
   <ng-container *ngIf="editing">
-    <div class="form-grid" *ngIf="repartidores.length">
+    <div class="form-grid">
       <p class="edit-hint">Repartidor: <strong>{{ editing.user?.name || ('#' + editing.user_id) }}</strong></p>
+      <p class="hint-muted edit-hint" *ngIf="repartidores.length === 0">
+        No hay repartidores en el listado ahora; aun así puedes ajustar monto y fecha de este pago.
+      </p>
       <div class="field">
         <span class="field-label">Monto</span>
-        <input type="number" min="0.01" step="0.01" [(ngModel)]="editAmount" />
+        <input
+          type="number"
+          min="0.01"
+          step="0.01"
+          name="editAmount"
+          [(ngModel)]="editAmount"
+        />
       </div>
       <div class="field">
         <span class="field-label">Fecha del pago</span>
-        <input type="date" [(ngModel)]="editPayDate" />
+        <input type="date" name="editPayDate" [(ngModel)]="editPayDate" />
       </div>
       <div class="field full">
         <span class="field-label">Día habitual</span>

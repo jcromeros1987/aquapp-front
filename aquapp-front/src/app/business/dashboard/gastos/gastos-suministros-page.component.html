@@ -1,0 +1,176 @@
+<div class="page-card wide">
+  <p class="breadcrumb">
+    <a routerLink="/dashboard/inicio">Inicio</a>
+    <span class="sep">·</span>
+    <span>Gastos</span>
+    <span class="sep">·</span>
+    <span>Suministros</span>
+  </p>
+
+  <h1>Suministros y recibos</h1>
+  <p class="subtitle">
+    El <strong>concepto</strong> viene del catálogo
+    <a routerLink="/dashboard/insumos-y-gastos">Insumos y gastos</a> (clasificación
+    <strong>Suministros y recibos</strong>). Opcionalmente indica el <strong>periodo que cubre el recibo</strong> (desde /
+    hasta); el monto se <strong>prorratea</strong> en la gráfica del inicio y en el balance. Registros antiguos como
+    <strong>servicio</strong> (Luz / limpieza) siguen en el historial. Mantenimiento de equipo en
+    <a routerLink="/dashboard/gastos/servicios">Servicios</a>; liners, tapas y gasolina en
+    <a routerLink="/dashboard/gastos/insumos">Insumos</a>.
+  </p>
+
+  <p class="alert alert-error" *ngIf="error">{{ error }}</p>
+  <p class="alert alert-ok" *ngIf="okMsg">{{ okMsg }}</p>
+
+  <p class="branch-context-hint" *ngIf="branchId == null">
+    Elige una <strong>sucursal</strong> en <a routerLink="/dashboard/perfil">Perfil</a> para registrar pagos.
+  </p>
+
+  <ng-container *ngIf="branchId != null">
+    <div class="form-panel">
+      <h2 class="section-title">Registrar pago</h2>
+      <div class="form-grid" *ngIf="conceptOptions.length; else sinConceptos">
+        <div class="field">
+          <span class="field-label">Concepto</span>
+          <select [(ngModel)]="formConceptKey">
+            <option [ngValue]="null">— Elija —</option>
+            <option *ngFor="let o of conceptOptions" [ngValue]="o.value">{{ o.label }}</option>
+          </select>
+        </div>
+        <div class="field">
+          <span class="field-label">Monto</span>
+          <input type="number" min="0.01" step="0.01" [(ngModel)]="formAmount" placeholder="0.00" />
+        </div>
+        <div class="field">
+          <span class="field-label">Fecha del pago</span>
+          <input type="date" [(ngModel)]="formPayDate" />
+        </div>
+        <div class="field">
+          <span class="field-label">Recibo cubre desde</span>
+          <input type="date" [(ngModel)]="formPeriodStart" />
+        </div>
+        <div class="field">
+          <span class="field-label">Recibo cubre hasta</span>
+          <input type="date" [(ngModel)]="formPeriodEnd" />
+        </div>
+        <div class="field full">
+          <span class="field-label">Notas (opcional)</span>
+          <input type="text" [(ngModel)]="formNotes" placeholder="Folio, periodo facturado…" />
+        </div>
+        <div class="field full actions">
+          <button type="button" class="btn btn-primary" [disabled]="saving" (click)="create()">
+            {{ saving ? 'Guardando…' : 'Guardar' }}
+          </button>
+        </div>
+      </div>
+      <ng-template #sinConceptos>
+        <p class="hint-muted">
+          No hay rubros con clasificación <strong>Suministros y recibos</strong>. Créalos en
+          <a routerLink="/dashboard/insumos-y-gastos">Insumos y gastos</a>.
+        </p>
+      </ng-template>
+    </div>
+
+    <h2 class="section-title">Historial (esta sucursal)</h2>
+    <div class="data-table-wrap" *ngIf="lines.length; else vacio">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Fecha pago</th>
+            <th>Periodo</th>
+            <th>Concepto</th>
+            <th>Monto</th>
+            <th>Notas</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let line of lines; trackBy: trackLine">
+            <td>{{ line.pay_date }}</td>
+            <td class="cell-period">{{ line.periodLabel }}</td>
+            <td>{{ line.conceptLabel }}</td>
+            <td>{{ line.amount | number: '1.2-2' }}</td>
+            <td class="cell-notes">{{ line.notes || '—' }}</td>
+            <td class="actions">
+              <button type="button" class="btn btn-ghost" (click)="startEdit(line)">Editar</button>
+              <button type="button" class="btn btn-danger" (click)="remove(line)">Eliminar</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <ng-template #vacio>
+      <p class="hint-muted">Aún no hay registros de suministros.</p>
+    </ng-template>
+  </ng-container>
+</div>
+
+<app-modal [(open)]="editModalOpen" title="Editar registro" size="lg">
+  <ng-container *ngIf="editingLine && editKind === 'insumo'">
+    <div class="form-grid">
+      <div class="field full">
+        <span class="field-label">Concepto</span>
+        <select [(ngModel)]="editConceptKey">
+          <option *ngFor="let o of insumoConceptOptions" [ngValue]="o.value">{{ o.label }}</option>
+        </select>
+      </div>
+      <div class="field">
+        <span class="field-label">Monto</span>
+        <input type="number" min="0.01" step="0.01" [(ngModel)]="editAmount" />
+      </div>
+      <div class="field">
+        <span class="field-label">Fecha del pago</span>
+        <input type="date" [(ngModel)]="editPayDate" />
+      </div>
+      <div class="field">
+        <span class="field-label">Recibo cubre desde</span>
+        <input type="date" [(ngModel)]="editPeriodStart" />
+      </div>
+      <div class="field">
+        <span class="field-label">Recibo cubre hasta</span>
+        <input type="date" [(ngModel)]="editPeriodEnd" />
+      </div>
+      <div class="field full">
+        <span class="field-label">Notas</span>
+        <input type="text" [(ngModel)]="editNotes" />
+      </div>
+      <div class="field full actions">
+        <button type="button" class="btn btn-primary" [disabled]="saving" (click)="saveEdit()">Guardar</button>
+        <button type="button" class="btn btn-ghost" (click)="cancelEdit()">Cancelar</button>
+      </div>
+    </div>
+  </ng-container>
+  <ng-container *ngIf="editingLine && editKind === 'service'">
+    <div class="form-grid">
+      <div class="field full">
+        <span class="field-label">Tipo</span>
+        <select [(ngModel)]="editConceptKey">
+          <option *ngFor="let o of suministroServiceTypeOptions" [ngValue]="o.value">{{ o.label }}</option>
+        </select>
+      </div>
+      <div class="field">
+        <span class="field-label">Monto</span>
+        <input type="number" min="0.01" step="0.01" [(ngModel)]="editAmount" />
+      </div>
+      <div class="field">
+        <span class="field-label">Fecha del pago</span>
+        <input type="date" [(ngModel)]="editPayDate" />
+      </div>
+      <div class="field">
+        <span class="field-label">Periodo desde</span>
+        <input type="date" [(ngModel)]="editPeriodStart" />
+      </div>
+      <div class="field">
+        <span class="field-label">Periodo hasta</span>
+        <input type="date" [(ngModel)]="editPeriodEnd" />
+      </div>
+      <div class="field full">
+        <span class="field-label">Notas</span>
+        <input type="text" [(ngModel)]="editNotes" />
+      </div>
+      <div class="field full actions">
+        <button type="button" class="btn btn-primary" [disabled]="saving" (click)="saveEdit()">Guardar</button>
+        <button type="button" class="btn btn-ghost" (click)="cancelEdit()">Cancelar</button>
+      </div>
+    </div>
+  </ng-container>
+</app-modal>

@@ -71,7 +71,7 @@ export class InventarioCatalogoPageComponent implements OnInit {
     const name = this.editName.trim();
     if (!name) return;
     this.saving = true;
-    this.api.update(this.editing.id, name).subscribe({
+    this.api.update(this.editing.id, { name }).subscribe({
       next: () => {
         this.saving = false;
         this.cancelEdit();

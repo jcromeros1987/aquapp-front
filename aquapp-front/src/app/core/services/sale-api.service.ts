@@ -22,6 +22,8 @@ export interface SaleCreatePayload {
   client_id?: number | null;
   customer_id?: number | null;
   inventory_unit_id?: number | null;
+  /** Vendedor a registrar (`sales.user_id`). Si no se envía, la API usa quien está autenticado. */
+  seller_user_id?: number | null;
   date: string;
   cost: number;
   quantity: number;
@@ -33,8 +35,9 @@ export interface SaleCreatePayload {
 export class SaleApiService {
   constructor(private readonly http: HttpClient) {}
 
+  /** Rango de días para serie diaria (máx. ~6 años, alineado con el backend). */
   dailySummary(days = 14): Observable<DailySummaryResponse> {
-    const d = Math.min(90, Math.max(7, days));
+    const d = Math.min(2190, Math.max(7, days));
     return this.http.get<DailySummaryResponse>(
       `${ApiEndpoints.sales.dailySummary}?days=${d}`,
     );
@@ -56,6 +59,7 @@ export class SaleApiService {
         client_id: body.client_id ?? null,
         customer_id: body.customer_id ?? null,
         inventory_unit_id: body.inventory_unit_id ?? null,
+        seller_user_id: body.seller_user_id ?? null,
         date: body.date,
         cost: body.cost,
         quantity: body.quantity,

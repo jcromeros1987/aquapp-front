@@ -24,18 +24,20 @@
       <span class="historico-resumen-meta">{{ sales.length }} movimiento(s)</span>
     </div>
 
-    <section class="historico-section">
-      <h2 class="historico-section-title">Periodo</h2>
-      <div class="historico-segmented" role="group" aria-label="Vista del historial">
-        <button
-          type="button"
-          *ngFor="let opt of granularityOptions"
-          class="historico-seg-btn"
-          [class.historico-seg-btn--active]="granularity === opt.id"
-          (click)="setGranularity(opt.id)"
-        >
-          {{ opt.label }}
-        </button>
+    <section class="historico-section historico-section--periodo">
+      <div class="historico-period-head">
+        <h2 class="historico-section-title">Periodo</h2>
+        <div class="historico-segmented" role="group" aria-label="Vista del historial">
+          <button
+            type="button"
+            *ngFor="let opt of granularityOptions"
+            class="historico-seg-btn"
+            [class.historico-seg-btn--active]="granularity === opt.id"
+            (click)="setGranularity(opt.id)"
+          >
+            {{ opt.label }}
+          </button>
+        </div>
       </div>
     </section>
 

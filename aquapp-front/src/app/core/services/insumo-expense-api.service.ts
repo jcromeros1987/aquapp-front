@@ -9,6 +9,8 @@ export interface InsumoExpenseCreatePayload {
   cat_product_id: number;
   amount: number;
   pay_date: string;
+  period_start?: string | null;
+  period_end?: string | null;
   notes?: string | null;
 }
 
@@ -30,7 +32,12 @@ export class InsumoExpenseApiService {
 
   update(
     id: number,
-    body: Partial<Pick<InsumoExpenseCreatePayload, 'cat_product_id' | 'amount' | 'pay_date' | 'notes'>>,
+    body: Partial<
+      Pick<
+        InsumoExpenseCreatePayload,
+        'cat_product_id' | 'amount' | 'pay_date' | 'period_start' | 'period_end' | 'notes'
+      >
+    >,
   ): Observable<InsumoExpenseRow> {
     return this.http.put<InsumoExpenseRow>(ApiEndpoints.insumoExpenses.one(id), body);
   }

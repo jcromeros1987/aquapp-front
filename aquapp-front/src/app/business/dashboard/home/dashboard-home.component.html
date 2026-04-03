@@ -14,29 +14,59 @@
     <span class="home-quick-hint">totales por sucursal · entrega de garrafones en planta</span>
   </p>
   <p class="lead">
-    Resumen de los últimos 14 días: <strong>ventas por día</strong> (ingresos) y
-    <strong>gastos</strong>: costo de mercancía vendida (costo × cantidad) más los
-    <strong>sueldos a repartidores</strong> (
-    <a routerLink="/dashboard/gastos/sueldos">Gastos → Sueldos</a>) y los <strong>pagos por insumos</strong> (
-    <a routerLink="/dashboard/gastos/insumos">Gastos → Insumos</a>). Las líneas punteadas marcan el
-    <strong>promedio diario</strong> en el periodo.
+    Resumen según la vista elegida (día, semana, mes o año). <strong>Azul</strong> = ingresos por ventas;
+    <strong>naranja</strong> = gastos que registras en
+    <a routerLink="/dashboard/gastos/sueldos">Sueldos</a>,
+    <a routerLink="/dashboard/gastos/suministros">Suministros</a>,
+    <a routerLink="/dashboard/gastos/insumos">Insumos</a> y
+    <a routerLink="/dashboard/gastos/servicios">Servicios</a> (por fecha de pago). Las líneas punteadas son la
+    media de cada serie.
   </p>
 </section>
 
-<p class="state state--load" *ngIf="loading">Cargando resumen…</p>
+<p class="state state--load" *ngIf="loading && !summary">Cargando resumen…</p>
 <p class="state state--err" *ngIf="error">{{ error }}</p>
 
-<section class="chart-card" *ngIf="!loading && !error && summary">
+<section class="chart-card" *ngIf="!error && summary">
   <div class="chart-head">
-    <h2>Ventas y gastos diarios</h2>
-    <div class="stats" *ngIf="summary.range_days > 0">
+    <div class="chart-head-titles">
+      <h2>Ventas y gastos</h2>
+      <p class="chart-subtitle" *ngIf="summary.range_days > 0">{{ chartSubtitle() }}</p>
+    </div>
+    <div
+      class="home-chart-segmented"
+      *ngIf="summary.range_days > 0"
+      role="group"
+      aria-label="Agrupar gráfica"
+    >
+      <button
+        type="button"
+        *ngFor="let opt of granularityOpts"
+        class="home-chart-seg-btn"
+        [class.home-chart-seg-btn--active]="granularity === opt.id"
+        (click)="setGranularity(opt.id)"
+      >
+        {{ opt.label }}
+      </button>
+    </div>
+    <div class="stats" *ngIf="summary.range_days > 0 && periodTotals as t">
       <div class="stat">
-        <span class="stat-label">Media ventas / día</span>
-        <strong class="stat-val stat-val--sales">{{ summary.avg_daily_sales | number : '1.2-2' }}</strong>
+        <span class="stat-label">Total ingresos (periodo)</span>
+        <strong class="stat-val stat-val--sales">{{ t.totalSales | number : '1.2-2' }}</strong>
       </div>
       <div class="stat">
-        <span class="stat-label">Media gastos / día</span>
-        <strong class="stat-val stat-val--exp">{{ summary.avg_daily_expenses | number : '1.2-2' }}</strong>
+        <span class="stat-label">Total gastos (periodo)</span>
+        <strong class="stat-val stat-val--exp" title="Sueldos, insumos y servicios registrados">{{
+          t.totalExpenses | number : '1.2-2'
+        }}</strong>
+      </div>
+      <div class="stat">
+        <span class="stat-label">{{ mediaIngresosLabel() }}</span>
+        <strong class="stat-val stat-val--avg-s">{{ chartAvgSales | number : '1.2-2' }}</strong>
+      </div>
+      <div class="stat">
+        <span class="stat-label">{{ mediaGastosLabel() }}</span>
+        <strong class="stat-val stat-val--avg-e">{{ chartAvgExp | number : '1.2-2' }}</strong>
       </div>
     </div>
   </div>
@@ -46,16 +76,22 @@
   </p>
 
   <div class="chart-legend" *ngIf="summary.range_days > 0 && summary.series.length">
-    <span class="lg lg-sales">■ Ventas</span>
-    <span class="lg lg-exp">■ Gastos (mercancía + sueldos)</span>
-    <span class="lg lg-avg-s">— Media ventas</span>
+    <span class="lg lg-sales">■ Ingresos (ventas)</span>
+    <span class="lg lg-exp">■ Gastos registrados</span>
+    <span class="lg lg-avg-s">— Media ingresos</span>
     <span class="lg lg-avg-e">— Media gastos</span>
   </div>
 
-  <div class="svg-wrap" *ngIf="summary.range_days > 0 && summary.series.length">
+  <div
+    class="svg-wrap svg-wrap--chart"
+    *ngIf="summary.range_days > 0 && summary.series.length"
+  >
+    <div class="chart-pending" *ngIf="chartPending" aria-live="polite">
+      Actualizando gráfica…
+    </div>
     <svg
       class="chart-svg"
-      [attr.viewBox]="'0 0 ' + viewW + ' ' + viewH"
+      [attr.viewBox]="'0 0 ' + chartViewW + ' ' + viewH"
       preserveAspectRatio="xMidYMid meet"
     >
       <!-- Grid -->
@@ -76,23 +112,6 @@
         [attr.y1]="baselineY"
         [attr.x2]="padL + innerW"
         [attr.y2]="baselineY"
-      />
-
-      <!-- Media ventas -->
-      <line
-        class="avg-line avg-line--sales"
-        [attr.x1]="padL"
-        [attr.x2]="padL + innerW"
-        [attr.y1]="avgSalesY"
-        [attr.y2]="avgSalesY"
-      />
-      <!-- Media gastos -->
-      <line
-        class="avg-line avg-line--exp"
-        [attr.x1]="padL"
-        [attr.x2]="padL + innerW"
-        [attr.y1]="avgExpY"
-        [attr.y2]="avgExpY"
       />
 
       @for (b of chartBars; track $index) {
@@ -116,6 +135,21 @@
           {{ b.label }}
         </text>
       }
+
+      <line
+        class="avg-line avg-line--sales"
+        [attr.x1]="padL"
+        [attr.x2]="padL + innerW"
+        [attr.y1]="avgSalesY"
+        [attr.y2]="avgSalesY"
+      />
+      <line
+        class="avg-line avg-line--exp"
+        [attr.x1]="padL"
+        [attr.x2]="padL + innerW"
+        [attr.y1]="avgExpY"
+        [attr.y2]="avgExpY"
+      />
     </svg>
   </div>
 </section>

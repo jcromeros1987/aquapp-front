@@ -29,7 +29,7 @@ import { GastosShellComponent } from './business/dashboard/gastos/gastos-shell.c
 import { GastosSueldosPageComponent } from './business/dashboard/gastos/gastos-sueldos-page.component';
 import { GastosInsumosPageComponent } from './business/dashboard/gastos/gastos-insumos-page.component';
 import { GastosServiciosPageComponent } from './business/dashboard/gastos/gastos-servicios-page.component';
-import { GastosModuloProximamenteComponent } from './business/dashboard/gastos/gastos-modulo-proximamente.component';
+import { GastosSuministrosPageComponent } from './business/dashboard/gastos/gastos-suministros-page.component';
 import { BalancePageComponent } from './business/dashboard/balance/balance-page.component';
 import { ProfilePageComponent } from './business/dashboard/profile/profile-page.component';
 import { authGuard } from './core/guards/auth.guard';
@@ -68,16 +68,7 @@ const routes: Routes = [
           { path: 'sueldos', component: GastosSueldosPageComponent },
           { path: 'insumos', component: GastosInsumosPageComponent },
           { path: 'servicios', component: GastosServiciosPageComponent },
-          {
-            path: 'suministros',
-            component: GastosModuloProximamenteComponent,
-            data: {
-              title: 'Suministros y recibos',
-              description:
-                'Recurrentes del negocio: luz (CFE), agua (contrato o pipas), gas LP o natural, renta del local u otros recibos fijos.',
-              hint: 'Pronto podrás llevar el control de estos gastos y ligarlos al balance.',
-            },
-          },
+          { path: 'suministros', component: GastosSuministrosPageComponent },
         ],
       },
       { path: 'zona', component: ZonaPageComponent },
