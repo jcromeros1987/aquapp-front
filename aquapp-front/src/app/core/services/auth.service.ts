@@ -73,6 +73,21 @@ export class AuthService {
     }
   }
 
+  /**
+   * Roles del usuario en sesión (login guarda `roles[]` con `name`).
+   * Puede ser `web` o `api` según Spatie; comparamos solo por nombre.
+   */
+  hasRole(roleName: string): boolean {
+    const u = this.getStoredUser();
+    const roles = u?.['roles'] as Array<{ name?: string }> | undefined;
+    if (!Array.isArray(roles)) return false;
+    return roles.some((r) => (r?.name || '').toLowerCase() === roleName.toLowerCase());
+  }
+
+  isAdmin(): boolean {
+    return this.hasRole('admin');
+  }
+
   logout(): void {
     const token = this.getToken();
     if (!token) {

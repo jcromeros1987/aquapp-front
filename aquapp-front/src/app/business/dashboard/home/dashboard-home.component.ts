@@ -5,6 +5,7 @@ import {
   DailySummaryResponse,
   SaleApiService,
 } from '../../../core/services/sale-api.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { apiErrorMessage } from '../../../core/utils/api-error';
 import {
   bucketAverages,
@@ -46,6 +47,10 @@ const GRANULARITY_OPTIONS: { id: HomeChartGranularity; label: string }[] = [
 })
 export class DashboardHomeComponent implements OnInit {
   private readonly saleApi = inject(SaleApiService);
+  private readonly auth = inject(AuthService);
+
+  /** Enlace a gestión de usuarios (misma pantalla que Personal) solo para rol `admin`. */
+  isAdmin = false;
 
   summary: DailySummaryResponse | null = null;
   granularity: HomeChartGranularity = 'day';
@@ -78,6 +83,7 @@ export class DashboardHomeComponent implements OnInit {
   yTicks: { y: number; val: number }[] = [];
 
   ngOnInit(): void {
+    this.isAdmin = this.auth.isAdmin();
     this.reloadSummary();
   }
 

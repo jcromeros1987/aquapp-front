@@ -2,17 +2,26 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
-import { DeliveryRoute, StaffUser } from '../../../core/models/api.models';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import { forkJoin } from 'rxjs';
+import { Branch, DeliveryRoute, StaffUser } from '../../../core/models/api.models';
 import {
   StaffApiService,
+  StaffBranchAssignmentPayload,
   StaffRole,
 } from '../../../core/services/staff-api.service';
+import { BranchApiService } from '../../../core/services/branch-api.service';
 import { DashboardBranchContextService } from '../../../core/services/dashboard-branch-context.service';
 import { DeliveryRoutesApiService } from '../../../core/services/delivery-routes-api.service';
 import { apiErrorMessage } from '../../../core/utils/api-error';
 import { AppModalComponent } from '../../../shared/ui/app-modal.component';
 import { BranchSelectComponent } from '../shared/branch-select.component';
+
+/** Fila editable de pivote usuario–sucursal–rol. */
+export interface StaffAssignmentRow {
+  branch_id: number | null;
+  staff_role: StaffRole;
+}
 
 @Component({
   selector: 'app-staff-page',
@@ -24,14 +33,24 @@ import { BranchSelectComponent } from '../shared/branch-select.component';
 export class StaffPageComponent implements OnInit {
   private readonly api = inject(StaffApiService);
   private readonly routesApi = inject(DeliveryRoutesApiService);
+  private readonly branchApi = inject(BranchApiService);
   private readonly branchCtx = inject(DashboardBranchContextService);
+  private readonly route = inject(ActivatedRoute);
+
+  /** Ruta `/dashboard/gestion-usuarios` (solo admin): mismo flujo que Personal con otro encabezado. */
+  readonly isAdminUsersPage =
+    this.route.snapshot.data['staffPageMode'] === 'admin';
+
+  pageHeading = this.isAdminUsersPage ? 'Gestión de usuarios' : 'Personal';
 
   filterBranchId: number | null = null;
   addModalOpen = false;
   staff: StaffUser[] = [];
   routes: DeliveryRoute[] = [];
+  /** Lista cacheada para selects de sucursal (una sola petición). */
+  branchList: Branch[] = [];
 
-  formBranchId: number | null = null;
+  formAssignments: StaffAssignmentRow[] = [{ branch_id: null, staff_role: 'assistant' }];
   form = {
     name: '',
     email: '',
@@ -39,7 +58,6 @@ export class StaffPageComponent implements OnInit {
     paternal_name: '',
     maternal_name: '',
     birthday: '',
-    role: 'assistant' as StaffRole,
     delivery_route_ids: [] as number[],
   };
 
@@ -47,6 +65,7 @@ export class StaffPageComponent implements OnInit {
   editName = '';
   editEmail = '';
   editPassword = '';
+  editAssignments: StaffAssignmentRow[] = [{ branch_id: null, staff_role: 'assistant' }];
   editDeliveryRouteIds: number[] = [];
 
   saving = false;
@@ -59,11 +78,6 @@ export class StaffPageComponent implements OnInit {
     delivery: 'Reparto',
   };
 
-  private readonly extraRoleLabels: Record<string, string> = {
-    owner: 'Propietario',
-    admin: 'Admin',
-  };
-
   constructor() {
     toObservable(this.branchCtx.branchId)
       .pipe(takeUntilDestroyed())
@@ -74,14 +88,34 @@ export class StaffPageComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.routesApi.list().subscribe({
-      next: (r) => (this.routes = r),
+    forkJoin({
+      routes: this.routesApi.list(),
+      branches: this.branchApi.list(),
+    }).subscribe({
+      next: ({ routes, branches }) => {
+        this.routes = routes;
+        this.branchList = branches;
+      },
       error: (e) => (this.error = apiErrorMessage(e)),
     });
   }
 
-  onFormBranchChange(id: number | null): void {
-    this.formBranchId = id;
+  addFormRow(): void {
+    this.formAssignments = [...this.formAssignments, { branch_id: null, staff_role: 'assistant' }];
+  }
+
+  removeFormRow(i: number): void {
+    if (this.formAssignments.length < 2) return;
+    this.formAssignments = this.formAssignments.filter((_, j) => j !== i);
+  }
+
+  addEditRow(): void {
+    this.editAssignments = [...this.editAssignments, { branch_id: null, staff_role: 'assistant' }];
+  }
+
+  removeEditRow(i: number): void {
+    if (this.editAssignments.length < 2) return;
+    this.editAssignments = this.editAssignments.filter((_, j) => j !== i);
   }
 
   reload(hint?: string): void {
@@ -93,19 +127,19 @@ export class StaffPageComponent implements OnInit {
     });
   }
 
-  roleNames(u: StaffUser): string {
-    if (!u.roles?.length) return '—';
-    return u.roles
-      .map(
-        (r) =>
-          this.roleLabels[r.name as StaffRole] ??
-          this.extraRoleLabels[r.name] ??
-          r.name,
-      )
-      .join(', ');
+  /** Resumen legible del pivote sucursal + rol por fila. */
+  assignmentsSummary(u: StaffUser): string {
+    const rows = u.branches ?? [];
+    if (!rows.length) return '—';
+    return rows
+      .map((b) => {
+        const key = (b.pivot?.staff_role as StaffRole) || '';
+        const rn = this.roleLabels[key] ?? b.pivot?.staff_role ?? '?';
+        return `${b.name?.trim() ?? 'Sucursal'} (${rn})`;
+      })
+      .join(' · ');
   }
 
-  /** Nombre + primer apellido para listado (ej. Margarito Romero). */
   staffFullName(u: StaffUser): string {
     return [u.name?.trim(), u.paternal_name?.trim()].filter(Boolean).join(' ');
   }
@@ -113,6 +147,27 @@ export class StaffPageComponent implements OnInit {
   routesLabel(u: StaffUser): string {
     const names = u.delivery_routes?.map((x) => x.name?.trim()).filter(Boolean);
     return names?.length ? names.join(' · ') : '—';
+  }
+
+  /** Primer rol API en Spatie (respaldo si el pivote no viene en JSON). */
+  staffPrimaryStaffRole(u: StaffUser): StaffRole {
+    const names = new Set((u.roles ?? []).map((r) => r.name));
+    const order: StaffRole[] = ['manager', 'assistant', 'delivery'];
+    for (const role of order) {
+      if (names.has(role)) return role;
+    }
+    return 'assistant';
+  }
+
+  private rowsToPayload(rows: StaffAssignmentRow[]): StaffBranchAssignmentPayload[] | null {
+    const filled = rows.filter((r) => r.branch_id != null) as StaffBranchAssignmentPayload[];
+    if (filled.length < 1) return null;
+    const ids = filled.map((r) => r.branch_id);
+    if (new Set(ids).size !== ids.length) {
+      this.error = 'No repitas la misma sucursal en dos filas.';
+      return null;
+    }
+    return filled;
   }
 
   isStaffRouteSelected(id: number, which: 'form' | 'edit'): boolean {
@@ -137,8 +192,10 @@ export class StaffPageComponent implements OnInit {
   }
 
   register(): void {
-    if (this.formBranchId == null) {
-      this.error = 'Seleccione la sucursal para el nuevo usuario.';
+    this.error = '';
+    const branch_assignments = this.rowsToPayload(this.formAssignments);
+    if (!branch_assignments) {
+      if (!this.error) this.error = 'Añade al menos una sucursal con rol en las asignaciones.';
       return;
     }
     this.saving = true;
@@ -151,8 +208,7 @@ export class StaffPageComponent implements OnInit {
         paternal_name: this.form.paternal_name.trim(),
         maternal_name: this.form.maternal_name.trim(),
         birthday: this.form.birthday,
-        role: this.form.role,
-        branch_id: this.formBranchId,
+        branch_assignments,
         delivery_route_ids:
           this.form.delivery_route_ids.length > 0 ? this.form.delivery_route_ids : undefined,
       })
@@ -165,13 +221,12 @@ export class StaffPageComponent implements OnInit {
             paternal_name: '',
             maternal_name: '',
             birthday: '',
-            role: 'assistant',
             delivery_route_ids: [],
           };
-          this.formBranchId = null;
+          this.formAssignments = [{ branch_id: null, staff_role: 'assistant' }];
           this.addModalOpen = false;
           this.saving = false;
-          this.reload('Personal registrado.');
+          this.reload(this.isAdminUsersPage ? 'Usuario registrado.' : 'Personal registrado.');
         },
         error: (e) => {
           this.error = apiErrorMessage(e);
@@ -186,6 +241,15 @@ export class StaffPageComponent implements OnInit {
     this.editEmail = u.email;
     this.editPassword = '';
     this.editDeliveryRouteIds = u.delivery_routes?.map((r) => r.id) ?? [];
+    const br = u.branches ?? [];
+    if (br.length > 0) {
+      this.editAssignments = br.map((b) => ({
+        branch_id: b.id,
+        staff_role: ((b.pivot?.staff_role as StaffRole) || this.staffPrimaryStaffRole(u)) as StaffRole,
+      }));
+    } else {
+      this.editAssignments = [{ branch_id: null, staff_role: this.staffPrimaryStaffRole(u) }];
+    }
   }
 
   cancelEdit(): void {
@@ -194,15 +258,24 @@ export class StaffPageComponent implements OnInit {
 
   saveEdit(): void {
     if (!this.editing) return;
+    this.error = '';
+    const branch_assignments = this.rowsToPayload(this.editAssignments);
+    if (!branch_assignments) {
+      if (!this.error) this.error = 'Debe haber al menos una asignación sucursal–rol.';
+      return;
+    }
     this.saving = true;
+    this.error = '';
     const body: {
       name?: string;
       email?: string;
       password?: string;
+      branch_assignments: StaffBranchAssignmentPayload[];
       delivery_route_ids?: number[];
     } = {
       name: this.editName.trim(),
       email: this.editEmail.trim(),
+      branch_assignments,
       delivery_route_ids: this.editDeliveryRouteIds,
     };
     if (this.editPassword.length >= 8) {

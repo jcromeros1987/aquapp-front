@@ -27,8 +27,9 @@ import {
  * v27: Orden raíz Inicio → Ventas → Gastos → Balance; re-migra desde v26.
  * v28: Gastos como grupo (Sueldos, Insumos, Servicios, Suministros); re-migra desde v27.
  * v29: Grupo «Ingresos» (Registro diario + Historial); rutas bajo ingresos/…; «Ventas» solo domicilio y sucursal.
+ * v30: «Gestión de usuarios» (solo admin), ruta gestion-usuarios.
  */
-const STORAGE_KEY = 'aquapp_dashboard_menu_v29';
+const STORAGE_KEY = 'aquapp_dashboard_menu_v30';
 
 export const DEFAULT_DASHBOARD_MENU: MenuItemRecord[] = [
   {
@@ -257,8 +258,18 @@ export const DEFAULT_DASHBOARD_MENU: MenuItemRecord[] = [
     enabled: true,
   },
   {
-    id: 'm7',
+    id: 'm30',
     order: 12,
+    label: 'Gestión de usuarios',
+    route: 'gestion-usuarios',
+    icon: '👤',
+    parentId: null,
+    enabled: true,
+    adminOnly: true,
+  },
+  {
+    id: 'm7',
+    order: 13,
     label: 'Configuración',
     route: '',
     icon: '⚙️',
@@ -285,7 +296,7 @@ export const DEFAULT_DASHBOARD_MENU: MenuItemRecord[] = [
   },
   {
     id: 'm9',
-    order: 13,
+    order: 14,
     label: 'Perfil',
     route: 'perfil',
     icon: '✏️',
@@ -333,6 +344,17 @@ export class DashboardMenuService {
           raw = v28;
           try {
             localStorage.setItem(STORAGE_KEY, v28);
+          } catch {
+            /* quota / privado */
+          }
+        }
+      }
+      if (!raw) {
+        const v29 = localStorage.getItem('aquapp_dashboard_menu_v29');
+        if (v29) {
+          raw = v29;
+          try {
+            localStorage.setItem(STORAGE_KEY, v29);
           } catch {
             /* quota / privado */
           }
@@ -511,6 +533,7 @@ export class DashboardMenuService {
       merged = this.ensureGastosMenuItem(merged, defaults);
       merged = this.ensureVentasMenuItems(merged, defaults);
       merged = this.ensureIngresosMenuItems(merged, defaults);
+      merged = this.ensureGestionUsuariosMenuItem(merged, defaults);
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
       } catch {
@@ -546,6 +569,7 @@ export class DashboardMenuService {
         id: d.id,
         parentId: d.parentId,
         route: d.route,
+        adminOnly: d.adminOnly,
         label: s.label?.trim() ? s.label : d.label,
         order: typeof s.order === 'number' ? s.order : d.order,
         // Rutas bajo catálogos (m16), Zona (m19), ingresos/ventas (m27,m2a–m2d) y gastos (m24 y subítems) deben seguir visibles aunque se hubieran desactivado antes.
@@ -730,6 +754,33 @@ export class DashboardMenuService {
     });
   }
 
+  /** Ítem «Gestión de usuarios» (solo admin en sidebar). */
+  private ensureGestionUsuariosMenuItem(
+    menu: MenuItemRecord[],
+    defaults: MenuItemRecord[],
+  ): MenuItemRecord[] {
+    const m30def = defaults.find((r) => r.id === 'm30');
+    if (!m30def) return menu;
+    const byId = new Map(menu.map((r) => [r.id, r]));
+    let out = menu;
+    if (!byId.has('m30')) {
+      out = [...out, { ...m30def }];
+    }
+    return out.map((row) =>
+      row.id === 'm30'
+        ? {
+            ...row,
+            ...m30def,
+            parentId: null,
+            route: 'gestion-usuarios',
+            enabled: true,
+            adminOnly: true,
+            label: row.label?.trim() ? row.label : m30def.label,
+          }
+        : row,
+    );
+  }
+
   /** Garantiza ítem «Zona» (mapa de clientes). */
   private ensureZonaMenuItem(
     menu: MenuItemRecord[],
@@ -905,6 +956,7 @@ export class DashboardMenuService {
     merged = this.ensureGastosMenuItem(merged, defaults);
     merged = this.ensureVentasMenuItems(merged, defaults);
     merged = this.ensureIngresosMenuItems(merged, defaults);
+    merged = this.ensureGestionUsuariosMenuItem(merged, defaults);
     const normalized = this.normalizeOrders(merged);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
     this._items.set(normalized);

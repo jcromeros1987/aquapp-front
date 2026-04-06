@@ -15,6 +15,8 @@ export interface MenuItemRecord {
   icon: string;
   parentId: string | null;
   enabled: boolean;
+  /** Si es true, el ítem solo se muestra a usuarios con rol admin (sidebar). */
+  adminOnly?: boolean;
 }
 
 export interface MenuTreeNode extends MenuItemRecord {

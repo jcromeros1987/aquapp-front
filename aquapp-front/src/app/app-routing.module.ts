@@ -33,6 +33,7 @@ import { GastosSuministrosPageComponent } from './business/dashboard/gastos/gast
 import { BalancePageComponent } from './business/dashboard/balance/balance-page.component';
 import { ProfilePageComponent } from './business/dashboard/profile/profile-page.component';
 import { authGuard } from './core/guards/auth.guard';
+import { adminGuard } from './core/guards/admin.guard';
 
 const routes: Routes = [
   { path: 'login', component: LoginComponent },
@@ -73,6 +74,12 @@ const routes: Routes = [
       },
       { path: 'zona', component: ZonaPageComponent },
       { path: 'personal', component: StaffPageComponent },
+      {
+        path: 'gestion-usuarios',
+        component: StaffPageComponent,
+        canActivate: [authGuard, adminGuard],
+        data: { staffPageMode: 'admin' },
+      },
       {
         path: 'ingresos',
         component: SalesIngresosShellComponent,

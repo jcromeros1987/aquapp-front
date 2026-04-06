@@ -1,9 +1,17 @@
+/** Pivote `branches_users`: rol de personal en esa sucursal. */
+export interface BranchUserPivot {
+  staff_role?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface Branch {
   id: number;
   name: string;
   /** GPS sucursal (mapa Zona, purificadora en mapa). */
   latitude?: number | string | null;
   longitude?: number | string | null;
+  pivot?: BranchUserPivot;
 }
 
 /** Clasificación en `cat_products`. */

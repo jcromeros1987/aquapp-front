@@ -3,8 +3,10 @@ import {
   Component,
   EventEmitter,
   Input,
+  OnChanges,
   OnInit,
   Output,
+  SimpleChanges,
   inject,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -18,7 +20,7 @@ import { apiErrorMessage } from '../../../core/utils/api-error';
   imports: [CommonModule, FormsModule],
   template: `
     <div class="field">
-      <span class="field-label">{{ label }}</span>
+      <span class="field-label" *ngIf="label">{{ label }}</span>
       <select
         [ngModel]="branchId"
         (ngModelChange)="onSelect($event)"
@@ -52,20 +54,35 @@ import { apiErrorMessage } from '../../../core/utils/api-error';
     `,
   ],
 })
-export class BranchSelectComponent implements OnInit {
+export class BranchSelectComponent implements OnInit, OnChanges {
   private readonly api = inject(BranchApiService);
 
   @Input() label = 'Sucursal';
   @Input() placeholder = '— Seleccione —';
   @Input() branchId: number | null = null;
   @Input() disabled = false;
+  /**
+   * Si se define (incluido `[]`), se usa como lista y no se llama al API
+   * (varias filas de asignación con una sola carga).
+   */
+  @Input() branchOptions?: Branch[];
   @Output() branchIdChange = new EventEmitter<number | null>();
 
   branches: Branch[] = [];
   loading = false;
   loadError = '';
 
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['branchOptions'] && this.branchOptions !== undefined) {
+      this.branches = [...this.branchOptions];
+    }
+  }
+
   ngOnInit(): void {
+    if (this.branchOptions !== undefined) {
+      this.branches = [...this.branchOptions];
+      return;
+    }
     this.loading = true;
     this.api.list().subscribe({
       next: (rows) => {

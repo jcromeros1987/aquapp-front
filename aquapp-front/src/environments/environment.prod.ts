@@ -7,7 +7,8 @@ import {
 
 export const environment = {
   production: true,
-  apiUrl: 'http://localhost:8000/api',
+  /** Producción por defecto; puedes sobrescribir con NG_API_URL en `.env` + `npm run build:prod`. */
+  apiUrl: 'https://api.aquapp.com.mx/public/api',
   zoneStaticMap: {
     bounds: { ...SANTA_MARIA_IXTIYUCAN_BOUNDS },
     mapAttribution: SANTA_MARIA_IXTIYUCAN_MAP_ATTRIBUTION,

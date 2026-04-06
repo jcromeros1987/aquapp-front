@@ -10,6 +10,10 @@
     <a routerLink="/dashboard/ingresos/historial" class="home-cta">Historial de ventas</a>
     <span class="home-quick-sep">·</span>
     <a routerLink="/dashboard/gastos" class="home-cta">Gastos</a>
+    <ng-container *ngIf="isAdmin">
+      <span class="home-quick-sep">·</span>
+      <a routerLink="/dashboard/gestion-usuarios" class="home-cta">Gestión de usuarios</a>
+    </ng-container>
     <span class="home-quick-sep">·</span>
     <span class="home-quick-hint">totales por sucursal · entrega de garrafones en planta</span>
   </p>

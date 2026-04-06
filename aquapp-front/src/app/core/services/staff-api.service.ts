@@ -6,6 +6,11 @@ import { StaffUser } from '../models/api.models';
 
 export type StaffRole = 'manager' | 'assistant' | 'delivery';
 
+export interface StaffBranchAssignmentPayload {
+  branch_id: number;
+  staff_role: StaffRole;
+}
+
 export interface StaffRegisterPayload {
   name: string;
   email: string;
@@ -13,8 +18,11 @@ export interface StaffRegisterPayload {
   paternal_name: string;
   maternal_name: string;
   birthday: string;
-  role: StaffRole;
-  branch_id: number;
+  /** Una o más filas usuario–sucursal–rol (pivote `branches_users`). */
+  branch_assignments?: StaffBranchAssignmentPayload[];
+  /** Alternativa soportada por la API (una sola sucursal). */
+  role?: StaffRole;
+  branch_id?: number;
   /** Rutas de distribución donde reparte (recomendado si rol es Reparto). */
   delivery_route_ids?: number[];
 }
@@ -43,6 +51,7 @@ export class StaffApiService {
       name?: string;
       email?: string;
       password?: string;
+      branch_assignments?: StaffBranchAssignmentPayload[];
       delivery_route_ids?: number[];
     },
   ): Observable<StaffUser> {

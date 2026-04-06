@@ -1,0 +1,2 @@
+# URL del API para build de producción (usar .env.example como plantilla)
+.env

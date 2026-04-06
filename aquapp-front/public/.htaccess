@@ -1,0 +1,22 @@
+# Aquapp dashboard (Angular) — Apache 2.4+
+# Sube este archivo junto a index.html en la raíz del subdominio.
+
+DirectoryIndex index.html
+
+# Sin listado de carpetas (evita 403 por “Indexes” en algunos hosts)
+<IfModule mod_autoindex.c>
+  Options -Indexes
+</IfModule>
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+
+  # Archivos y directorios reales (JS, CSS, favicon, assets)
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+
+  # Rutas del router Angular → index.html
+  RewriteRule ^ index.html [L]
+</IfModule>

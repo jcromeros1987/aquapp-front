@@ -1,0 +1,30 @@
+Despliegue — dashboard.aquapp.com.mx
+====================================
+
+1) Carpeta en el servidor
+   Si el subdominio apunta a una carpeta y dentro pusiste:
+     aquapp-front/aquapp-front/   ← aquí van index.html, .js, .css, assets, .htaccess
+   entonces en el navegador debes abrir (incluye las dos carpetas en la URL):
+
+     https://dashboard.aquapp.com.mx/aquapp-front/aquapp-front/
+
+   No basta con https://dashboard.aquapp.com.mx/ si los archivos no están en la raíz
+   de ese subdominio.
+
+2) Variable NG_BASE_HREF en .env (antes de npm run build:prod)
+   Debe coincidir con la ruta pública, barra inicial y barra final, por ejemplo:
+
+     NG_BASE_HREF=/aquapp-front/aquapp-front/
+
+   Así Angular genera bien los enlaces a JS/CSS y el .htaccess lleva el RewriteBase correcto.
+
+3) Build
+     npm run build:prod
+
+4) Subir
+   Todo el contenido de:  dist/aquapp-front/browser/
+   a la carpeta del servidor:  .../aquapp-front/aquapp-front/
+   (la misma ruta que refleja NG_BASE_HREF).
+
+5) API
+   NG_API_URL en .env debe apuntar al backend en producción (HTTPS).
